@@ -1,0 +1,27 @@
+### =============================================================================
+### CASO C-15: Detalle de Venta sin N+1 (Consultas fijas independientes de renglones)
+### Consigna Parcial §3.5 y §4.2
+### =============================================================================
+
+@baseUrl = http://localhost:8000
+
+# 1. Login como ADMIN o VENDEDOR
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Password123!"
+}
+
+###
+
+# 2. Obtener detalle de la Venta 1 (con 2 renglones)
+# Se resuelve con precarga estricta (joinedload/selectinload) en cantidad fija de consultas SQL
+GET {{baseUrl}}/ventas/1
+
+###
+
+# Nota: La evidencia técnica cuantitativa y script de conteo de queries SQL
+# reside documentada en: parcial/evidencia/c15_nplusone_evidence.md

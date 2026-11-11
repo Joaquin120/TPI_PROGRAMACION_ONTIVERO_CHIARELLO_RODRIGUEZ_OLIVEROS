@@ -1,0 +1,38 @@
+### =============================================================================
+### CASO C-13: Rollback transaccional íntegro ante stock insuficiente
+### Consigna Parcial §3.3
+### =============================================================================
+
+@baseUrl = http://localhost:8000
+
+# 1. Login como VENDEDOR
+# @name loginVendedor
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "vendedor@example.com",
+  "password": "Password123!"
+}
+
+###
+
+# 2. Intento de venta de una cantidad mayor al stock disponible (ej. libro_id=5 Bestiario solo tiene 1)
+# Debe responder HTTP 409 Conflict y realizar rollback completo (no crea venta, ni renglones, ni movimientos)
+POST {{baseUrl}}/ventas
+Content-Type: application/json
+
+{
+  "cliente_id": 1,
+  "detalles": [
+    {
+      "libro_id": 5,
+      "cantidad": 999
+    }
+  ]
+}
+
+###
+
+# 3. Verificación de que el stock del libro permaneció intacto tras el rollback
+GET {{baseUrl}}/libros/5

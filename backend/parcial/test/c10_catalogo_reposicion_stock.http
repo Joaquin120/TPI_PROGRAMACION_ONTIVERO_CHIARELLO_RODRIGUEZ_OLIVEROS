@@ -1,0 +1,53 @@
+### =============================================================================
+### CASO C-10: Alta y reposición de stock (punto único de mutación)
+### Consigna Parcial §3.3
+### =============================================================================
+
+@baseUrl = http://localhost:8000
+
+# 1. Login como ADMIN
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Password123!"
+}
+
+###
+
+# 2. Alta de nuevo libro con stock inicial (genera libro y MovimientoStock 'Stock inicial')
+# @name altaLibro
+POST {{baseUrl}}/libros
+Content-Type: application/json
+
+{
+  "isbn": "978-950-07-8888-8",
+  "titulo": "El Aleph",
+  "precio": 21000.00,
+  "stock_inicial": 10,
+  "autor_id": 2,
+  "editorial_id": 2,
+  "genero_id": 2
+}
+
+###
+
+# 3. Reposición de stock sobre el libro creado (genera MovimientoStock 'Reposicion')
+POST {{baseUrl}}/libros/{{altaLibro.response.body.id}}/reponer
+Content-Type: application/json
+
+{
+  "cantidad": 5
+}
+
+###
+
+# 4. Intento de mutar el stock mediante PATCH directo (debe ser rechazado con 422)
+PATCH {{baseUrl}}/libros/{{altaLibro.response.body.id}}
+Content-Type: application/json
+
+{
+  "stock": 999
+}

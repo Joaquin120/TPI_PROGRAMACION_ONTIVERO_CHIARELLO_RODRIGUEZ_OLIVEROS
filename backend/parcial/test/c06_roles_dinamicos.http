@@ -1,0 +1,43 @@
+### =============================================================================
+### CASO C-06: Verificación dinámica de roles y revocación inmediata
+### Consigna Parcial §2.4
+### =============================================================================
+
+@baseUrl = http://localhost:8000
+
+# 1. Login como ADMIN principal
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Password123!"
+}
+
+###
+
+# 2. Acceso permitido a endpoints exclusivos de ADMIN (ej. /admin/usuarios)
+GET {{baseUrl}}/admin/usuarios
+
+###
+
+# 3. Revocación de rol VENDEDOR a un usuario (ej. usuario_id = 3)
+POST {{baseUrl}}/admin/usuarios/3/roles/VENDEDOR/revocar
+
+###
+
+# 4. En la petición inmediata posterior, dicho usuario intenta operar como VENDEDOR
+# Debe ser rechazado dinámicamente con HTTP 403 Forbidden sin esperar expiración de token
+POST {{baseUrl}}/ventas
+Content-Type: application/json
+
+{
+  "cliente_id": 1,
+  "detalles": [
+    {
+      "libro_id": 1,
+      "cantidad": 1
+    }
+  ]
+}

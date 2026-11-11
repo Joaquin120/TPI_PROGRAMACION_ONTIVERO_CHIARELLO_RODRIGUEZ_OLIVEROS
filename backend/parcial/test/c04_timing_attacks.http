@@ -1,0 +1,29 @@
+### =============================================================================
+### CASO C-04: Mitigación de Timing Attacks en Login con usuario inexistente
+### Consigna Parcial §2.3
+### =============================================================================
+
+@baseUrl = http://localhost:8000
+
+# 1. Login con usuario existente pero password incorrecta
+# Responde 401 Unauthorized y ejecuta bcrypt
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "PasswordInvalida!"
+}
+
+###
+
+# 2. Login con usuario inexistente
+# Debe responder exactamente el mismo mensaje genérico 401 Unauthorized
+# Calcula bcrypt contra el hash ficticio precargado en startup para mantener tiempo constante
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "usuario_completamente_inexistente_999@example.com",
+  "password": "PasswordInvalida!"
+}

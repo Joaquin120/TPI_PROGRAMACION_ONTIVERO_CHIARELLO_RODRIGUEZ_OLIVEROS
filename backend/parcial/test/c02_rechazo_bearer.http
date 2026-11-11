@@ -1,0 +1,15 @@
+### =============================================================================
+### CASO C-02: Rechazo de autenticación vía cabecera Authorization: Bearer
+### Consigna Parcial §2.2
+### =============================================================================
+
+@baseUrl = http://localhost:8000
+
+# 1. Petición protegida enviando token en Authorization: Bearer (debe responder 401 Unauthorized)
+GET {{baseUrl}}/auth/yo
+Authorization: Bearer un_token_jwt_cualquiera_o_valido
+
+###
+
+# 2. Petición protegida sin cookie de autenticación (debe responder 401 Unauthorized)
+GET {{baseUrl}}/auth/yo

@@ -1,0 +1,25 @@
+### =============================================================================
+### CASO C-01: Login exitoso con cookie HttpOnly access_token y sin token en body
+### Consigna Parcial §2.2
+### =============================================================================
+
+@baseUrl = http://localhost:8000
+
+# 1. Login exitoso con admin@example.com
+# Debe responder HTTP 200 OK
+# Debe establecer la cookie Set-Cookie: access_token=...; HttpOnly; SameSite=lax
+# El cuerpo de la respuesta NO debe contener access_token ni password_hash
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Password123!"
+}
+
+###
+
+# 2. Verificación de identidad con la cookie obtenida
+# @name verificarYo
+GET {{baseUrl}}/auth/yo

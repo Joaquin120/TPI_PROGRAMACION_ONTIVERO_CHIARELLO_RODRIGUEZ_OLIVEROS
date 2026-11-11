@@ -1,0 +1,14 @@
+### =============================================================================
+### CASO C-14: Verificación del Trigger Append-Only en movimiento_stock
+### Consigna Parcial §3.2 y §4.2
+### =============================================================================
+
+# Nota: El caso C-14 se valida directamente contra el motor PostgreSQL
+# ejecutando el script oficial ubicado en parcial/test/solo_agregado.sql
+#
+# Comando de ejecución en terminal / psql:
+#   psql -U postgres -d tp_cap1a4_db -f parcial/test/solo_agregado.sql
+#
+# Comportamiento esperado:
+# - El bloque UPDATE lanza excepción capturada: "El trigger rechazó la modificación correctamente"
+# - El bloque DELETE lanza excepción capturada: "El trigger rechazó la eliminación correctamente"

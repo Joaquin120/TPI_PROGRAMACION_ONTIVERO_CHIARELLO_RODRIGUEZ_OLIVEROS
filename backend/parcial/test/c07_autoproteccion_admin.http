@@ -1,0 +1,28 @@
+### =============================================================================
+### CASO C-07: Autoprotección del sistema contra eliminación del último ADMIN
+### Consigna Parcial §2.4
+### =============================================================================
+
+@baseUrl = http://localhost:8000
+
+# 1. Login como ADMIN principal (admin@example.com, id = 1)
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Password123!"
+}
+
+###
+
+# 2. Intento de un ADMIN de auto-revocarse el rol ADMIN sobre sí mismo
+# Debe responder HTTP 409 Conflict
+POST {{baseUrl}}/admin/usuarios/1/roles/ADMIN/revocar
+
+###
+
+# 3. Intento de revocar al último admin del sistema (o revocar cuando solo queda uno)
+# Debe responder HTTP 409 Conflict impidiendo dejar al sistema sin administradores
+POST {{baseUrl}}/admin/usuarios/2/roles/ADMIN/revocar

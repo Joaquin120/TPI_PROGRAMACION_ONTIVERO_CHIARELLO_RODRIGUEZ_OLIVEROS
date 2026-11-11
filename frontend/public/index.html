@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Frontend de una librería — TPI de la materia Programación III (UTN). Catálogo, libros, clientes, ventas e historial.">
+  <title>Librería El Faro de los Libros — Programación III (UTN)</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <header class="cabecera">
+    <h1>Librería El Faro de los Libros</h1>
+    <nav class="navegacion" aria-label="Navegación principal entre vistas">
+      <ul>
+        <li><a href="#vista-catalogo" aria-current="page">Catálogo</a></li>
+        <li><a href="#vista-libros">Libros</a></li>
+        <li><a href="#vista-clientes">Clientes</a></li>
+        <li><a href="#vista-ventas">Ventas</a></li>
+        <li><a href="#vista-historial">Historial</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="contenido-principal">
+    <!-- 5 vistas ancladas: los ejercicios siguientes las poblarán con JavaScript -->
+    <section id="vista-catalogo" aria-labelledby="titulo-catalogo">
+      <h2 id="titulo-catalogo">Catálogo</h2>
+
+      <form class="buscador" role="search" aria-label="Buscar libros por título">
+        <label for="catalogo-busqueda">Buscar por título:</label>
+        <input type="search" id="catalogo-busqueda" name="catalogo-busqueda" placeholder="Ej.: el principito">
+        <button type="submit">Buscar libro por título</button>
+      </form>
+
+      <!-- Estados previstos para JavaScript (ocultos en la maqueta) -->
+      <p id="catalogo-sin-resultados" class="mensaje" hidden>La búsqueda no coincidió con ningún libro del catálogo.</p>
+      <p id="catalogo-listado-vacio" class="listado-vacio" hidden>El catálogo no tiene libros para mostrar.</p>
+
+      <div class="tabla-contenedor">
+        <table id="tabla-catalogo">
+          <caption>Listado de libros del catálogo</caption>
+          <thead>
+            <tr>
+              <th scope="col">Título</th>
+              <th scope="col">ISBN</th>
+              <th scope="col">Editorial</th>
+              <th scope="col">Género</th>
+              <th scope="col">Autores</th>
+              <th scope="col">Precio</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>El principito</td>
+              <td>978-84-376-0494-7</td>
+              <td>Editorial Sudamericana</td>
+              <td>Fábula</td>
+              <td>Antoine de Saint-Exupéry</td>
+              <td>$1500,00</td>
+            </tr>
+            <tr>
+              <td>Cuentos de terror</td>
+              <td>978-987-1111-22-3</td>
+              <td>Ediciones Horizon</td>
+              <td>Sin clasificar</td>
+              <td>Julia M. Peralta</td>
+              <td>$2000,00</td>
+            </tr>
+            <tr>
+              <td>Introducción a la programación</td>
+              <td>978-987-550-333-9</td>
+              <td>Editorial Técnica UTN</td>
+              <td>Educación</td>
+              <td>María Gómez, Luis Ramírez</td>
+              <td>$3250,50</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="vista-libros" aria-labelledby="titulo-libros">
+      <h2 id="titulo-libros">Libros</h2>
+
+      <form id="form-alta-libro" aria-label="Formulario de alta de libros">
+        <fieldset>
+          <legend>Registrar un libro</legend>
+
+          <div>
+            <label for="libro-titulo">Título:</label>
+            <input type="text" id="libro-titulo" name="libro-titulo" required>
+          </div>
+
+          <div>
+            <label for="libro-isbn">ISBN:</label>
+            <input type="text" id="libro-isbn" name="libro-isbn" required>
+          </div>
+
+          <div>
+            <label for="libro-precio">Precio:</label>
+            <input type="number" id="libro-precio" name="libro-precio" min="0" step="0.01" required>
+          </div>
+
+          <div>
+            <label for="libro-editorial">Editorial:</label>
+            <select id="libro-editorial" name="libro-editorial" required>
+              <option value="" disabled selected>Seleccione una editorial</option>
+              <option value="1">Editorial Sudamericana</option>
+              <option value="2">Ediciones Horizon</option>
+              <option value="3">Editorial Técnica UTN</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="libro-genero">Género:</label>
+            <!-- «Sin clasificar» es la opción por defecto seleccionada (ausencia de género) -->
+            <select id="libro-genero" name="libro-genero">
+              <option value="" selected>Sin clasificar</option>
+              <option value="1">Fábula</option>
+              <option value="2">Terror</option>
+              <option value="3">Educación</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="libro-autores">Autores (seleccione uno o más):</label>
+            <select id="libro-autores" name="libro-autores" multiple size="4" required>
+              <option value="1">Antoine de Saint-Exupéry</option>
+              <option value="2">Julia M. Peralta</option>
+              <option value="3">María Gómez</option>
+              <option value="4">Luis Ramírez</option>
+            </select>
+          </div>
+
+          <div>
+            <button type="submit">Registrar libro en el sistema</button>
+          </div>
+        </fieldset>
+      </form>
+
+      <!-- Resultado de la operación (correcta o rechazada), texto "OK —" / "Error —" escrito por JavaScript -->
+      <p id="libros-feedback" class="mensaje" role="status" aria-live="polite" hidden>Ejemplo de mensaje: OK — Libro registrado correctamente. O bien: Error — No se pudo registrar el libro (el motivo se explica en texto).</p>
+
+      <h3>Libros registrados</h3>
+
+      <p id="libros-listado-vacio" class="listado-vacio" hidden>Aún no hay libros registrados en el sistema.</p>
+
+      <div class="tabla-contenedor">
+        <table id="tabla-libros">
+          <caption>Listado de libros registrados</caption>
+          <thead>
+            <tr>
+              <th scope="col">Título</th>
+              <th scope="col">ISBN</th>
+              <th scope="col">Editorial</th>
+              <th scope="col">Género</th>
+              <th scope="col">Autores</th>
+              <th scope="col">Precio</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>El principito</td>
+              <td>978-84-376-0494-7</td>
+              <td>Editorial Sudamericana</td>
+              <td>Fábula</td>
+              <td>Antoine de Saint-Exupéry</td>
+              <td>$1500,00</td>
+            </tr>
+            <tr>
+              <td>Cuentos de terror</td>
+              <td>978-987-1111-22-3</td>
+              <td>Ediciones Horizon</td>
+              <td>Sin clasificar</td>
+              <td>Julia M. Peralta</td>
+              <td>$2000,00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="vista-clientes" aria-labelledby="titulo-clientes">
+      <h2 id="titulo-clientes">Clientes</h2>
+
+      <form id="form-alta-cliente" aria-label="Formulario de alta de clientes" novalidate>
+        <fieldset>
+          <legend>Registrar un cliente</legend>
+
+          <div>
+            <label for="cliente-nombre">Nombre completo:</label>
+            <input type="text" id="cliente-nombre" name="cliente-nombre" required>
+          </div>
+
+          <div>
+            <label for="cliente-email">Email:</label>
+            <input type="email" id="cliente-email" name="cliente-email" required>
+          </div>
+
+          <div>
+            <button type="submit">Registrar cliente en el sistema</button>
+          </div>
+        </fieldset>
+      </form>
+
+      <!-- Resultado de la operación (correcta o rechazada), texto "OK —" / "Error —" escrito por JavaScript -->
+      <p id="clientes-feedback" class="mensaje" role="status" aria-live="polite" hidden>Ejemplo de mensaje: OK — Cliente registrado correctamente. O bien: Error — No se pudo registrar el cliente (el motivo se explica en texto).</p>
+
+      <h3>Clientes registrados</h3>
+
+      <p id="clientes-listado-vacio" class="listado-vacio" hidden>Aún no hay clientes registrados en el sistema.</p>
+
+      <div class="tabla-contenedor">
+        <table id="tabla-clientes">
+          <caption>Listado de clientes registrados</caption>
+          <thead>
+            <tr>
+              <th scope="col">Nombre completo</th>
+              <th scope="col">Email</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Ana Beltrán</td>
+              <td>ana.beltran@correo.test</td>
+            </tr>
+            <tr>
+              <td>Carlos Duarte</td>
+              <td>carlos.duarte@correo.test</td>
+            </tr>
+            <tr>
+              <td>Elena Fuentes</td>
+              <td>elena.fuentes@correo.test</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="vista-ventas" aria-labelledby="titulo-ventas">
+      <h2 id="titulo-ventas">Ventas</h2>
+
+      <form id="form-venta" aria-label="Composición de una venta">
+        <fieldset>
+          <legend>Armar la venta</legend>
+
+          <div>
+            <label for="venta-cliente">Cliente:</label>
+            <select id="venta-cliente" name="venta-cliente" required>
+              <option value="" disabled selected>Seleccione un cliente</option>
+              <option value="1">Ana Beltrán</option>
+              <option value="2">Carlos Duarte</option>
+              <option value="3">Elena Fuentes</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="venta-libro">Libro:</label>
+            <select id="venta-libro" name="venta-libro" required>
+              <option value="" disabled selected>Seleccione un libro</option>
+              <option value="1">El principito — $1500,00</option>
+              <option value="2">Cuentos de terror — $2000,00</option>
+              <option value="3">Introducción a la programación — $3250,50</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="venta-cantidad">Cantidad (entero mayor que cero):</label>
+            <input type="number" id="venta-cantidad" name="venta-cantidad" min="1" step="1" value="1" required>
+          </div>
+
+          <div>
+            <button type="button" id="venta-agregar">Agregar renglón a la venta</button>
+          </div>
+        </fieldset>
+      </form>
+
+      <h3>Renglones de la venta</h3>
+
+      <p id="renglones-listado-vacio" class="listado-vacio" hidden>La venta aún no tiene renglones agregados.</p>
+
+      <div class="tabla-contenedor">
+        <table id="tabla-renglones">
+          <caption>Renglones de la venta en composición</caption>
+          <thead>
+            <tr>
+              <th scope="col">Libro</th>
+              <th scope="col">Cantidad</th>
+              <th scope="col">Precio unitario</th>
+              <th scope="col">Subtotal</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>El principito</td>
+              <td>2</td>
+              <td>$1500,00</td>
+              <td>$3000,00</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>Cuentos de terror</td>
+              <td>1</td>
+              <td>$2000,00</td>
+              <td>$2000,00</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="resumen-venta">
+        Total de la venta:
+        <strong id="venta-total">$5000,00</strong>
+      </p>
+
+      <button type="button" id="venta-confirmar">Confirmar venta</button>
+
+      <!-- Resultado de la operación (correcta o rechazada), texto "OK —" / "Error —" escrito por JavaScript -->
+      <p id="venta-feedback" class="mensaje" role="status" aria-live="polite" hidden>Ejemplo de mensaje: OK — Venta confirmada. O bien: Error — No se pudo confirmar la venta (el motivo se explica en texto).</p>
+    </section>
+
+    <section id="vista-historial" aria-labelledby="titulo-historial">
+      <h2 id="titulo-historial">Historial</h2>
+
+      <p id="historial-listado-vacio" class="listado-vacio" hidden>Aún no hay ventas confirmadas en el historial.</p>
+
+      <div class="tabla-contenedor">
+        <table id="tabla-historial">
+          <caption>Ventas confirmadas</caption>
+          <thead>
+            <tr>
+              <th scope="col">Identificador</th>
+              <th scope="col">Fecha</th>
+              <th scope="col">Cliente</th>
+              <th scope="col">Total</th>
+              <th scope="col">Detalle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>V-0001</td>
+              <td>15/10/2026</td>
+              <td>Ana Beltrán</td>
+              <td>$5000,00</td>
+              <td><button type="button" class="historial-ver-detalle">Ver detalle de la venta V-0001</button></td>
+            </tr>
+            <tr>
+              <td>V-0002</td>
+              <td>18/10/2026</td>
+              <td>Carlos Duarte</td>
+              <td>$3250,50</td>
+              <td><button type="button" class="historial-ver-detalle">Ver detalle de la venta V-0002</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Detalle de la venta seleccionada</h3>
+
+      <!-- Panel de detalle inmutable: JavaScript renderiza aquí la venta elegida.
+           No tiene (ni deberá tener) controles de edición o eliminación. -->
+      <div id="tabla-historial-detalle">
+        <div class="tabla-contenedor">
+          <table>
+            <caption>Renglones de la venta seleccionada (valores históricos)</caption>
+            <thead>
+              <tr>
+                <th scope="col">Libro</th>
+                <th scope="col">Cantidad</th>
+                <th scope="col">Precio unitario</th>
+                <th scope="col">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>El principito</td>
+                <td>2</td>
+                <td>$1500,00</td>
+                <td>$3000,00</td>
+              </tr>
+              <tr>
+                <td>Cuentos de terror</td>
+                <td>1</td>
+                <td>$2000,00</td>
+                <td>$2000,00</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row" colspan="3">Total de la venta</th>
+                <td>$5000,00</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <p>Librería El Faro de los Libros — TPI Frontend de una librería · UTN — Programación III · Datos ficticios de práctica.</p>
+  </footer>
+
+  <script src="js/app.js" defer></script>
+</body>
+</html>

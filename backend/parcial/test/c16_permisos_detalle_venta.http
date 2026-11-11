@@ -1,0 +1,47 @@
+### =============================================================================
+### CASO C-16: Control de Visibilidad en Detalle de Venta (GET /ventas/{id})
+### Consigna Parcial §2.6
+### =============================================================================
+
+@baseUrl = http://localhost:8000
+
+# 1. Login como ADMIN (Personal de la librería)
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Password123!"
+}
+
+###
+
+# 2. El personal consulta cualquier venta (ej. Venta 1 de Lucía Fernández)
+# Debe responder HTTP 200 OK
+GET {{baseUrl}}/ventas/1
+
+###
+
+# 3. Login como CLIENTE (Ana Paz - ana@example.com)
+# @name loginCliente
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ana@example.com",
+  "password": "Password123!"
+}
+
+###
+
+# 4. Ana Paz intenta consultar la Venta 1 (que pertenece a Lucía Fernández, no a ella)
+# El router NO tiene requiere_rol, pero el servicio valida titularidad:
+# Debe responder HTTP 403 Forbidden
+GET {{baseUrl}}/ventas/1
+
+###
+
+# 5. Ana Paz consulta sus propias ventas
+# Debe responder HTTP 200 OK con sus ventas asociadas
+GET {{baseUrl}}/mis-ventas

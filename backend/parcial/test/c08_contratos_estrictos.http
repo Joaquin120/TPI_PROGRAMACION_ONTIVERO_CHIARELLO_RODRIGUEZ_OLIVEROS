@@ -1,0 +1,46 @@
+### =============================================================================
+### CASO C-08: Validación estricta DTO (extra="forbid" rechaza campos desconocidos)
+### Consigna Parcial §1.3
+### =============================================================================
+
+@baseUrl = http://localhost:8000
+
+# 1. Login como ADMIN
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Password123!"
+}
+
+###
+
+# 2. Intento de crear un libro con un campo adicional no reconocido ("campo_inventado": 123)
+# Debe responder HTTP 422 Unprocessable Entity
+POST {{baseUrl}}/admin/libros
+Content-Type: application/json
+
+{
+  "isbn": "978-950-07-9999-9",
+  "titulo": "Libro Inválido",
+  "precio": 15000.00,
+  "stock": 5,
+  "autor_id": 1,
+  "editorial_id": 1,
+  "genero_id": 1,
+  "campo_inventado": "no_permitido"
+}
+
+###
+
+# 3. Intento de enviar una contraseña de más de 72 bytes en UTF-8
+# Debe responder HTTP 422 Unprocessable Entity (no HTTP 500)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "unacontrasenademasiadolargaygigantescaquesuperalossesentaydosbytesensuformatoencodeadoutf8_123456789012345678901234567890"
+}

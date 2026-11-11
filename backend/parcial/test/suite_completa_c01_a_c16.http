@@ -1,0 +1,281 @@
+### =============================================================================
+### SUITE COMPLETA DE PRUEBAS DEL PARCIAL: CASOS C-01 A C-16
+### Consigna Parcial §4.2
+### =============================================================================
+
+@baseUrl = http://localhost:8000
+
+### --- CASO C-01: Login exitoso con cookie HttpOnly y sin token en body ---
+# @name c01_login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Password123!"
+}
+
+###
+
+GET {{baseUrl}}/auth/yo
+
+### --- CASO C-02: Rechazo de Authorization: Bearer o sin cookie ---
+GET {{baseUrl}}/auth/yo
+Authorization: Bearer token_no_permitido_en_body_o_header
+
+### --- CASO C-03: Rate Limiting en Login (5 fallos en 60s -> HTTP 429) ---
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "vendedor@example.com",
+  "password": "Fail1!"
+}
+
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "vendedor@example.com",
+  "password": "Fail2!"
+}
+
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "vendedor@example.com",
+  "password": "Fail3!"
+}
+
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "vendedor@example.com",
+  "password": "Fail4!"
+}
+
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "vendedor@example.com",
+  "password": "Fail5!"
+}
+
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "vendedor@example.com",
+  "password": "Fail6!"
+}
+
+### --- CASO C-04: Mitigación de Timing Attacks (401 con hash ficticio) ---
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "inexistente_999999@example.com",
+  "password": "PasswordCualquiera!"
+}
+
+### --- CASO C-05: Restricción por cambio de contraseña obligatorio ---
+# @name c05_login_nuevo
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "nuevo@example.com",
+  "password": "Password123!"
+}
+
+###
+GET {{baseUrl}}/ventas
+
+###
+POST {{baseUrl}}/auth/cambiar-password
+Content-Type: application/json
+
+{
+  "password_actual": "Password123!",
+  "password_nueva": "NuevaClave2026!"
+}
+
+###
+GET {{baseUrl}}/ventas
+
+### --- CASO C-06: Verificación dinámica de roles y revocación inmediata ---
+# @name c06_login_admin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Password123!"
+}
+
+###
+GET {{baseUrl}}/admin/usuarios
+
+###
+POST {{baseUrl}}/admin/usuarios/3/roles/VENDEDOR/revocar
+
+### --- CASO C-07: Autoprotección del sistema contra eliminación de último ADMIN ---
+POST {{baseUrl}}/admin/usuarios/1/roles/ADMIN/revocar
+
+### --- CASO C-08: Validación estricta DTO (extra="forbid") ---
+POST {{baseUrl}}/admin/libros
+Content-Type: application/json
+
+{
+  "isbn": "978-950-07-9999-9",
+  "titulo": "Libro Fallido",
+  "precio": 10000.00,
+  "stock": 5,
+  "autor_id": 1,
+  "editorial_id": 1,
+  "genero_id": 1,
+  "campo_extra_prohibido": "error"
+}
+
+### --- CASO C-09: Paginación estándar uniforme y validación de límites ---
+GET {{baseUrl}}/libros?page=1&size=20
+
+###
+GET {{baseUrl}}/libros?page=9999&size=20
+
+### --- CASO C-10: Alta y reposición de stock ---
+# @name c10_alta_libro
+POST {{baseUrl}}/admin/libros
+Content-Type: application/json
+
+{
+  "isbn": "978-950-07-5555-5",
+  "titulo": "Laberintos",
+  "precio": 19500.00,
+  "stock": 6,
+  "autor_id": 2,
+  "editorial_id": 2,
+  "genero_id": 2
+}
+
+###
+POST {{baseUrl}}/admin/libros/{{c10_alta_libro.response.body.id}}/reponer
+Content-Type: application/json
+
+{
+  "cantidad": 4,
+  "motivo": "Reposición de stock"
+}
+
+###
+PATCH {{baseUrl}}/admin/libros/{{c10_alta_libro.response.body.id}}
+Content-Type: application/json
+
+{
+  "stock": 100
+}
+
+### --- CASO C-11: Borrado lógico (soft-delete) y liberación de ISBN ---
+# @name c11_libro_borrar
+POST {{baseUrl}}/admin/libros
+Content-Type: application/json
+
+{
+  "isbn": "978-950-07-6666-6",
+  "titulo": "Libro a Eliminar",
+  "precio": 15000.00,
+  "stock": 2,
+  "autor_id": 1,
+  "editorial_id": 1,
+  "genero_id": 1
+}
+
+###
+DELETE {{baseUrl}}/admin/libros/{{c11_libro_borrar.response.body.id}}
+
+###
+GET {{baseUrl}}/libros
+
+###
+POST {{baseUrl}}/admin/libros
+Content-Type: application/json
+
+{
+  "isbn": "978-950-07-6666-6",
+  "titulo": "Libro Reutilizando ISBN",
+  "precio": 18000.00,
+  "stock": 5,
+  "autor_id": 1,
+  "editorial_id": 1,
+  "genero_id": 1
+}
+
+### --- CASO C-12: Registro atómico de ventas bajo UoW ---
+# @name c12_login_vendedor
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "vendedor@example.com",
+  "password": "Password123!"
+}
+
+###
+POST {{baseUrl}}/ventas
+Content-Type: application/json
+
+{
+  "cliente_id": 2,
+  "detalles": [
+    {
+      "libro_id": 1,
+      "cantidad": 1
+    }
+  ]
+}
+
+### --- CASO C-13: Rollback transaccional íntegro ante stock insuficiente ---
+POST {{baseUrl}}/ventas
+Content-Type: application/json
+
+{
+  "cliente_id": 1,
+  "detalles": [
+    {
+      "libro_id": 5,
+      "cantidad": 999
+    }
+  ]
+}
+
+### --- CASO C-14: Verificación del Trigger Append-Only en movimiento_stock ---
+# Ejecutar: psql -U postgres -d tp_cap1a4_db -f parcial/test/solo_agregado.sql
+
+### --- CASO C-15: Detalle de Venta sin N+1 (Consultas fijas) ---
+GET {{baseUrl}}/ventas/1
+
+### --- CASO C-16: Control de Visibilidad en Detalle de Venta ---
+# @name c16_login_cliente
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ana@example.com",
+  "password": "Password123!"
+}
+
+###
+# Rechazado con 403 Forbidden porque la Venta 1 pertenece a Lucía Fernández
+GET {{baseUrl}}/ventas/1
+
+###
+# Permitido: Ana Paz consulta sus propias ventas
+GET {{baseUrl}}/mis-ventas

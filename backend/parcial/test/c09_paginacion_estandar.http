@@ -1,0 +1,22 @@
+### =============================================================================
+### CASO C-09: Paginación estándar uniforme y validación de límites
+### Consigna Parcial §1.2
+### =============================================================================
+
+@baseUrl = http://localhost:8000
+
+# 1. Consulta paginada válida de catálogo (página 1, tamaño 20)
+# Debe responder 200 OK con estructura: {"items": [...], "total": N, "page": 1, "size": 20, "pages": M}
+GET {{baseUrl}}/libros?page=1&size=20
+
+###
+
+# 2. Consulta con tamaño personalizado (page=1, size=2)
+# Debe responder 200 OK y items debe tener longitud <= 2
+GET {{baseUrl}}/libros?page=1&size=2
+
+###
+
+# 3. Consulta de una página fuera de rango (page > pages)
+# Debe responder HTTP 422 Unprocessable Entity
+GET {{baseUrl}}/libros?page=9999&size=20

@@ -1,0 +1,71 @@
+### =============================================================================
+### CASO C-03: Rate Limiting en Login (5 intentos fallidos en 60s -> HTTP 429)
+### Consigna Parcial §2.3
+### =============================================================================
+
+@baseUrl = http://localhost:8000
+
+# Intento fallido 1 -> 401 Unauthorized
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "vendedor@example.com",
+  "password": "PasswordIncorrecta1!"
+}
+
+###
+
+# Intento fallido 2 -> 401 Unauthorized
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "vendedor@example.com",
+  "password": "PasswordIncorrecta2!"
+}
+
+###
+
+# Intento fallido 3 -> 401 Unauthorized
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "vendedor@example.com",
+  "password": "PasswordIncorrecta3!"
+}
+
+###
+
+# Intento fallido 4 -> 401 Unauthorized
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "vendedor@example.com",
+  "password": "PasswordIncorrecta4!"
+}
+
+###
+
+# Intento fallido 5 -> 401 Unauthorized
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "vendedor@example.com",
+  "password": "PasswordIncorrecta5!"
+}
+
+###
+
+# Intento 6 (Bloqueo activo por Rate Limit)
+# Debe responder HTTP 429 Too Many Requests con cabecera Retry-After: 60
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "vendedor@example.com",
+  "password": "CualquierPassword!"
+}

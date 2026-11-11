@@ -1,0 +1,59 @@
+### =============================================================================
+### CASO C-11: Borrado lógico (soft delete) de libro y liberación de ISBN
+### Consigna Parcial §3.4
+### =============================================================================
+
+@baseUrl = http://localhost:8000
+
+# 1. Login como ADMIN
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Password123!"
+}
+
+###
+
+# 2. Alta de libro para prueba de soft delete
+# @name libroParaBorrar
+POST {{baseUrl}}/admin/libros
+Content-Type: application/json
+
+{
+  "isbn": "978-950-07-7777-7",
+  "titulo": "Libro Efímero",
+  "precio": 12000.00,
+  "stock": 3,
+  "autor_id": 1,
+  "editorial_id": 1,
+  "genero_id": 1
+}
+
+###
+
+# 3. Soft delete del libro creado (debe responder HTTP 204 No Content)
+DELETE {{baseUrl}}/admin/libros/{{libroParaBorrar.response.body.id}}
+
+###
+
+# 4. Verificación en catálogo público (el libro borrado NO debe figurar en el listado)
+GET {{baseUrl}}/libros
+
+###
+
+# 5. Alta de un nuevo libro reutilizando el mismo ISBN liberado (debe responder HTTP 201 Created)
+POST {{baseUrl}}/admin/libros
+Content-Type: application/json
+
+{
+  "isbn": "978-950-07-7777-7",
+  "titulo": "Libro Nuevo con Mismo ISBN Reutilizado",
+  "precio": 14000.00,
+  "stock": 4,
+  "autor_id": 1,
+  "editorial_id": 1,
+  "genero_id": 1
+}
