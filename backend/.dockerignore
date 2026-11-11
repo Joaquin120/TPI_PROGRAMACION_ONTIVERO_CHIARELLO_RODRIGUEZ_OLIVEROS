@@ -1,0 +1,11 @@
+.git
+**/.env
+**/.env.*
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.venv
+**/venv
+**/.pytest_cache
+**/.coverage
+**/.DS_Store

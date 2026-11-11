@@ -104,7 +104,7 @@ Paso │ Agente A (Backend / Infra)         │ Agente B (Backend Aux / Funciona
 ## FASE 1 — Ejercicio 1: Catálogo y Cliente HTTP
 
 ### [C-02] `http-client-base`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**: Módulo de cliente HTTP centralizado en JavaScript nativo (`frontend/public/js/api.js`):
   - Creación de módulo cliente con URL base prefijada obligatoriamente en `/api` para todas las peticiones `fetch`.
   - Normalización de rutas: preservación estricta de barra final en endpoints de colección (ej: `/api/libros/`, `/api/clientes/`, `/api/ventas/`).
@@ -234,7 +234,7 @@ Paso │ Agente A (Backend / Infra)         │ Agente B (Backend Aux / Funciona
 ## FASE 4 — Ejercicio 4: Dockerfile del Frontend y Proxy Nginx
 
 ### [C-08] `docker-frontend-nginx`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**: Contenerización del frontend con Nginx alpine y orquestación con Docker Compose (Ejercicio 4):
   - Creación de `frontend/Dockerfile` basado en `nginx:1.26-alpine`: configuración de `ENV NGINX_ENVSUBST_FILTER=^API_UPSTREAM$`, copia de carpeta `public/` a `/usr/share/nginx/html/` y copia de plantilla `default.conf.template` a `/etc/nginx/templates/default.conf.template`.
   - Creación de `frontend/default.conf.template`: configuración de servidor Nginx en puerto 80, bloque `location /` con `try_files $uri $uri/ =404;` y proxy reverso en `location /api/` con directiva `proxy_pass http://${API_UPSTREAM}/;` (reescritura de prefijo con barra final).

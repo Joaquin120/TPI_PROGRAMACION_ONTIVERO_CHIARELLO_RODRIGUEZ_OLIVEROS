@@ -77,6 +77,7 @@ El plan de implementación completo está en [CHANGES.md](CHANGES.md). Resumen:
 5. **SIEMPRE capturar y presentar amigablemente los errores de negocio `409 Conflict` (duplicados de ISBN o email, cliente/libro inexistente) y `422 Unprocessable Entity` (violación de contrato) sin cerrar ni borrar los formularios o el carrito.**
 6. **NUNCA permitir dobles envíos de ventas → deshabilitar el botón de confirmación en la UI mientras la promesa de red esté pendiente.**
 7. **SIEMPRE ejecutar migraciones de base de datos automáticamente al arrancar el contenedor backend con `alembic upgrade head`.**
+8. **NUNCA proponer (`/opsx:propose`) ni implementar un change cuyas dependencias no estén 100% archivadas en `openspec/changes/archive/` y marcadas con `[x]` en `CHANGES.md` → ESTRICTAMENTE PROHIBIDO saltarse gates de dependencia (ej: no se puede iniciar `C-06` sin tener `C-03`, `C-04` y `C-05` completamente archivados). Todo agente DEBE verificar el árbol de dependencias antes de actuar.**
 
 ---
 
@@ -84,10 +85,29 @@ El plan de implementación completo está en [CHANGES.md](CHANGES.md). Resumen:
 
 ```
 1. Leer la KB relevante (knowledge-base/)        → entender el dominio
-2. Identificar el change en CHANGES.md           → respetar dependencias
+2. Verificar dependencias en CHANGES.md          → PROHIBIDO iniciar si falta alguna dependencia [x]
 3. /opsx:propose C-NN-nombre                     → proposal + design + specs + tasks
 4. Implementar las tasks                         → respetando las reglas duras
 5. /opsx:archive C-NN-nombre + marcar [x]        → cerrar el change
 ```
 
 Aplicar TODAS las reglas duras en cada paso. Ante conflicto entre la KB y este archivo, las reglas duras prevalecen.
+
+---
+
+## Protocolo de Orientación: Palabra Clave «guia»
+
+Cuando el usuario escriba la palabra clave **`guia`** (o `guía`):
+
+1. **Inspeccionar estado en `CHANGES.md` y `openspec/changes/archive/`:** Identificar con precisión qué changes están completados (`[x]`) y cuáles siguen pendientes (`[ ]`).
+2. **Filtrar por dependencias estrictas:** Mostrar **ÚNICAMENTE** los changes cuyas dependencias directas estén 100% completadas y archivadas.
+3. **NUNCA ofrecer changes bloqueados:**
+   - Si `C-03`, `C-04` o `C-05` (cualquiera de ellos) sigue pendiente `[ ]`, está **ESTRICTAMENTE PROHIBIDO** ofrecer o sugerir `C-06`.
+   - Si se completaron `C-03` y `C-04` pero falta `C-05`, ofrecer **únicamente** `C-05`.
+   - Solo cuando `C-03`, `C-04` y `C-05` estén los tres con `[x]`, se habilita y ofrece `C-06`.
+   - `C-07` solo se ofrece si `C-06` está completado con `[x]`.
+   - `C-09` solo se ofrece si tanto `C-07` como `C-08` están completados con `[x]`.
+4. **Formato de respuesta al usuario:**
+   - Resumen conciso de los changes ya completados (`[x]`).
+   - Lista exclusiva de los **únicos changes disponibles para hacer AHORA**.
+   - El comando exacto para iniciar el siguiente change: `/opsx:propose <nombre-change>`.
