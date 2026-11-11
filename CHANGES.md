@@ -83,7 +83,7 @@ Paso │ Agente A (Backend / Infra)         │ Agente B (Backend Aux / Funciona
 ## FASE 0 — Cimientos y Monorepo
 
 ### [C-01] `foundation-setup`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**: Scaffolding y unificación de la estructura monorepo `backend/` y `frontend/` + infraestructura inicial:
   - Estructuración de directorios raíz del proyecto: `backend/` (FastAPI, SQLAlchemy, Alembic), `frontend/` (Nginx, `public/`), `docs/`, `knowledge-base/` y `design-system/`.
   - Configuración de entornos: creación de plantillas `.env.example` en raíz y subdirectorios con variables `DATABASE_URL`, `API_UPSTREAM` y `ENVIRONMENT` (sin credenciales sensibles quemadas).
