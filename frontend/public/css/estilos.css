@@ -821,3 +821,110 @@ tfoot td {
   border-radius: 0 var(--radio-sm) var(--radio-sm) 0;
   font-size: var(--tamano-sm);
 }
+
+/* ==========================================================================
+   ESTILOS PARA ALTA DE LIBROS Y VERIFICACIÓN DE AUTORES (C-04)
+   ========================================================================== */
+
+.fila-campos-doble {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--espacio-4);
+}
+
+@media (max-width: 600px) {
+  .fila-campos-doble {
+    grid-template-columns: 1fr;
+  }
+}
+
+.seccion-autores {
+  margin-top: var(--espacio-3);
+  padding: var(--espacio-4);
+  background: var(--color-superficie-sutil);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-md);
+}
+
+.fila-busqueda-autor {
+  display: flex;
+  gap: var(--espacio-3);
+  align-items: center;
+  margin-top: var(--espacio-2);
+  margin-bottom: var(--espacio-3);
+}
+
+.fila-busqueda-autor input {
+  max-width: 14rem;
+}
+
+.autor-verificado-caja {
+  padding: var(--espacio-3) var(--espacio-4);
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-primario-claro);
+  border-left: 4px solid var(--color-primario);
+  border-radius: var(--radio-sm);
+  margin-bottom: var(--espacio-3);
+}
+
+.fila-rol-agregar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-3);
+  align-items: center;
+  margin-top: var(--espacio-2);
+}
+
+.fila-rol-agregar select {
+  padding: var(--espacio-2) var(--espacio-3);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  background-color: var(--color-superficie);
+}
+
+.mensaje-error-campo {
+  color: var(--color-error);
+  font-size: var(--tamano-sm);
+  font-weight: 500;
+  margin-top: var(--espacio-1);
+  margin-bottom: var(--espacio-2);
+}
+
+.tabla-compacta {
+  width: 100%;
+  margin-top: var(--espacio-3);
+  font-size: var(--tamano-sm);
+}
+
+.tabla-compacta th,
+.tabla-compacta td {
+  padding: var(--espacio-2) var(--espacio-3);
+}
+
+.boton-quitar-autor {
+  background: transparent;
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radio-sm);
+  padding: var(--espacio-1) var(--espacio-2);
+  font-size: var(--tamano-xs);
+  cursor: pointer;
+}
+
+.boton-quitar-autor:hover {
+  background-color: var(--color-error-fondo);
+}
+
+.feedback-exito {
+  background-color: var(--color-exito-fondo) !important;
+  border-color: var(--color-exito) !important;
+  color: var(--color-exito) !important;
+  display: block;
+}
+
+.feedback-error {
+  background-color: var(--color-error-fondo) !important;
+  border-color: var(--color-error) !important;
+  color: var(--color-error) !important;
+  display: block;
+}

@@ -1,14 +1,129 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.db.models.autor import Autor
+from src.db.models.editorial import Editorial
+from src.db.models.genero import Genero
 from src.db.models.libro import Libro
 from src.db.models.libro_autor import LibroAutor
 from src.db.session import get_db
-from src.schemas.libro import LibroDetailResponse, LibroResponse
+from src.schemas.libro import (
+    LibroCreate,
+    LibroDetailResponse,
+    LibroResponse,
+)
 
 router = APIRouter(tags=["libros"])
+
+
+@router.post(
+    "/",
+    response_model=LibroDetailResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Registrar un nuevo libro con sus autorías",
+)
+async def create_libro(
+    libro_in: LibroCreate,
+    db: AsyncSession = Depends(get_db),
+) -> LibroDetailResponse:
+    """Crea y persiste un nuevo libro junto con sus relaciones de autoría de forma atómica."""
+    # 1. Verificar si el ISBN ya existe (RN-LIB-01)
+    stmt_isbn = select(Libro).where(Libro.isbn == libro_in.isbn.strip())
+    existing_libro = (await db.execute(stmt_isbn)).scalar_one_or_none()
+    if existing_libro:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"El ISBN '{libro_in.isbn}' ya se encuentra registrado",
+        )
+
+    # 2. Verificar existencia de la editorial
+    stmt_ed = select(Editorial).where(Editorial.id == libro_in.editorial_id)
+    editorial = (await db.execute(stmt_ed)).scalar_one_or_none()
+    if not editorial:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"La editorial con ID {libro_in.editorial_id} no existe",
+        )
+
+    # 3. Verificar existencia del género si fue provisto
+    genero = None
+    if libro_in.genero_id is not None:
+        stmt_gen = select(Genero).where(Genero.id == libro_in.genero_id)
+        genero = (await db.execute(stmt_gen)).scalar_one_or_none()
+        if not genero:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"El género con ID {libro_in.genero_id} no existe",
+            )
+
+    # 4. Verificar autores
+    autores_map = {}
+    for item in libro_in.autores:
+        stmt_aut = select(Autor).where(Autor.id == item.autor_id)
+        autor = (await db.execute(stmt_aut)).scalar_one_or_none()
+        if not autor:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"El autor con ID {item.autor_id} no existe",
+            )
+        autores_map[item.autor_id] = autor
+
+    # 5. Persistencia transaccional
+    try:
+        nuevo_libro = Libro(
+            titulo=libro_in.titulo.strip(),
+            isbn=libro_in.isbn.strip(),
+            precio=libro_in.precio,
+            stock=libro_in.stock,
+            editorial_id=libro_in.editorial_id,
+            genero_id=libro_in.genero_id,
+        )
+        db.add(nuevo_libro)
+        await db.flush()
+
+        autores_resp = []
+        for item in libro_in.autores:
+            la = LibroAutor(
+                libro_id=nuevo_libro.id,
+                autor_id=item.autor_id,
+                rol=item.rol,
+                orden=item.orden,
+            )
+            db.add(la)
+            autores_resp.append(
+                {
+                    "autor_id": item.autor_id,
+                    "nombre": autores_map[item.autor_id].nombre,
+                    "rol": item.rol,
+                    "orden": item.orden,
+                }
+            )
+
+        await db.commit()
+        await db.refresh(nuevo_libro)
+
+        return LibroDetailResponse(
+            id=nuevo_libro.id,
+            titulo=nuevo_libro.titulo,
+            isbn=nuevo_libro.isbn,
+            precio=nuevo_libro.precio,
+            stock=nuevo_libro.stock,
+            editorial_id=nuevo_libro.editorial_id,
+            editorial=editorial.nombre,
+            genero_id=nuevo_libro.genero_id,
+            genero=genero.nombre if genero else None,
+            autores=autores_resp,
+        )
+
+    except IntegrityError as exc:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Conflicto de integridad: {exc.orig}",
+        ) from exc
 
 
 @router.get(
@@ -105,4 +220,3 @@ async def get_libro_detail(
         genero=libro.genero.nombre if libro.genero else None,
         autores=autores_response,
     )
-

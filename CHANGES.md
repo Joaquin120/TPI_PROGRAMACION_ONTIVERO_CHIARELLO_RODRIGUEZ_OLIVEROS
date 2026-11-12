@@ -147,7 +147,7 @@ Paso │ Agente A (Backend / Infra)         │ Agente B (Backend Aux / Funciona
 ## FASE 2 — Ejercicio 2: Alta de Libros y Clientes
 
 ### [C-04] `alta-libros`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**: Formulario de alta de libros con validación y autorías dinámicas (Ejercicio 2A / US-004):
   - Formulario de alta en `frontend/public/index.html` y lógica de controladores en `frontend/public/js/app.js`.
   - Carga dinámica de opciones: obtención de editoriales vía `GET /api/editoriales/` y géneros vía `GET /api/generos/`.

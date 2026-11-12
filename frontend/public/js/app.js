@@ -13,6 +13,11 @@ import {
   resolverEtiquetaGenero
 } from './catalog.js';
 
+import {
+  inicializarEventosAltaLibro,
+  estadoAltaLibro
+} from './books.js';
+
 // ============================================================
 // 1. MODELO DE DATOS INICIAL (IDs estables, datos ficticios)
 // ============================================================
@@ -951,8 +956,14 @@ function inicializar() {
     console.error('Error inicializando catálogo:', error);
   });
 
-  // Alta de libros y clientes.
-  document.getElementById('form-alta-libro').addEventListener('submit', manejarAltaLibro);
+  // Inicializar eventos y carga reactiva del Alta de Libros vía API REST
+  inicializarEventosAltaLibro(document, {
+    onExito: function () {
+      cargarCatalogoApi().catch(console.error);
+    }
+  });
+
+  // Alta de clientes.
   document.getElementById('form-alta-cliente').addEventListener('submit', manejarAltaCliente);
 
   // Composición y confirmación de la venta.

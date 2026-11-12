@@ -109,53 +109,87 @@
 
           <div>
             <label for="libro-isbn">ISBN:</label>
-            <input type="text" id="libro-isbn" name="libro-isbn" required>
+            <input type="text" id="libro-isbn" name="libro-isbn" required placeholder="Ej.: 978-987-1234-56-7">
           </div>
 
-          <div>
-            <label for="libro-precio">Precio:</label>
-            <input type="number" id="libro-precio" name="libro-precio" min="0" step="0.01" required>
+          <div class="fila-campos-doble">
+            <div>
+              <label for="libro-precio">Precio:</label>
+              <input type="number" id="libro-precio" name="libro-precio" min="0.01" step="0.01" required placeholder="Ej.: 1500.00">
+            </div>
+
+            <div>
+              <label for="libro-stock">Stock:</label>
+              <input type="number" id="libro-stock" name="libro-stock" min="0" step="1" value="0" required>
+            </div>
           </div>
 
           <div>
             <label for="libro-editorial">Editorial:</label>
             <select id="libro-editorial" name="libro-editorial" required>
-              <option value="" disabled selected>Seleccione una editorial</option>
-              <option value="1">Editorial Sudamericana</option>
-              <option value="2">Ediciones Horizon</option>
-              <option value="3">Editorial Técnica UTN</option>
+              <option value="" disabled selected>Cargando editoriales...</option>
             </select>
           </div>
 
           <div>
             <label for="libro-genero">Género:</label>
-            <!-- «Sin clasificar» es la opción por defecto seleccionada (ausencia de género) -->
+            <!-- «Sin clasificar» es la opción seleccionada por defecto (ausencia de género) -->
             <select id="libro-genero" name="libro-genero">
               <option value="" selected>Sin clasificar</option>
-              <option value="1">Fábula</option>
-              <option value="2">Terror</option>
-              <option value="3">Educación</option>
             </select>
           </div>
 
-          <div>
-            <label for="libro-autores">Autores (seleccione uno o más):</label>
-            <select id="libro-autores" name="libro-autores" multiple size="4" required>
-              <option value="1">Antoine de Saint-Exupéry</option>
-              <option value="2">Julia M. Peralta</option>
-              <option value="3">María Gómez</option>
-              <option value="4">Luis Ramírez</option>
-            </select>
+          <!-- Componente interactivo de verificación y asignación de autores -->
+          <div class="seccion-autores">
+            <label for="autor-id-buscar">Autores del libro (verificar por ID):</label>
+            <div class="fila-busqueda-autor">
+              <input type="number" id="autor-id-buscar" min="1" placeholder="ID de autor (ej. 1)">
+              <button type="button" id="autor-btn-verificar">Verificar ID</button>
+            </div>
+            
+            <p id="autor-error-feedback" class="mensaje-error-campo" hidden></p>
+
+            <div id="autor-verificado-info" class="autor-verificado-caja" hidden>
+              <p><strong>Autor encontrado:</strong> <span id="autor-verificado-nombre"></span></p>
+              <div class="fila-rol-agregar">
+                <label for="autor-rol-select">Rol en la autoría:</label>
+                <select id="autor-rol-select">
+                  <option value="autor" selected>autor</option>
+                  <option value="coautor">coautor</option>
+                  <option value="traductor">traductor</option>
+                  <option value="ilustrador">ilustrador</option>
+                </select>
+                <button type="button" id="autor-btn-agregar">Agregar autoría</button>
+              </div>
+            </div>
+
+            <div class="tabla-contenedor">
+              <table id="tabla-autores-agregados" class="tabla-compacta">
+                <caption>Autores asignados a este libro (mínimo 1 requerido)</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Orden</th>
+                    <th scope="col">ID</th>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Rol</th>
+                    <th scope="col">Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="cuerpo-autores-agregados">
+                  <!-- Filas agregadas dinámicamente -->
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div>
-            <button type="submit">Registrar libro en el sistema</button>
+            <button type="submit" id="libro-btn-submit">Registrar libro en el sistema</button>
           </div>
         </fieldset>
       </form>
 
-      <!-- Resultado de la operación (correcta o rechazada), texto "OK —" / "Error —" escrito por JavaScript -->
-      <p id="libros-feedback" class="mensaje" role="status" aria-live="polite" hidden>Ejemplo de mensaje: OK — Libro registrado correctamente. O bien: Error — No se pudo registrar el libro (el motivo se explica en texto).</p>
+      <!-- Resultado de la operación (éxito o rechazo 409/422) -->
+      <div id="libros-feedback" class="mensaje" role="status" aria-live="polite" hidden></div>
 
       <h3>Libros registrados</h3>
 
@@ -421,6 +455,7 @@
 
   <script type="module" src="js/api.js"></script>
   <script type="module" src="js/catalog.js"></script>
+  <script type="module" src="js/books.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

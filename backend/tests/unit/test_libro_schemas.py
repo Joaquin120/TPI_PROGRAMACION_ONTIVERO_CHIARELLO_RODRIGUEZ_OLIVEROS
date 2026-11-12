@@ -6,86 +6,74 @@ from src.schemas.libro import (
     AutorResponse,
     EditorialResponse,
     GeneroResponse,
+    LibroAutorCreate,
     LibroAutorDetailResponse,
+    LibroCreate,
     LibroDetailResponse,
     LibroResponse,
 )
 
 
-def test_editorial_response_valid():
-    editorial = EditorialResponse(id=1, nombre="Editorial Sudamericana")
-    assert editorial.id == 1
-    assert editorial.nombre == "Editorial Sudamericana"
+def test_libro_autor_create_valid():
+    autor = LibroAutorCreate(autor_id=1, rol="autor", orden=1)
+    assert autor.autor_id == 1
+    assert autor.rol == "autor"
+    assert autor.orden == 1
 
 
-def test_genero_response_valid():
-    genero = GeneroResponse(id=1, nombre="Fábula")
-    assert genero.id == 1
-    assert genero.nombre == "Fábula"
-
-
-def test_libro_response_valid():
-    libro = LibroResponse(
-        id=1,
-        titulo="El principito",
-        isbn="978-84-376-0494-7",
-        precio=Decimal("1500.00"),
-        stock=10,
-        editorial="Editorial Sudamericana",
-        genero="Fábula",
-    )
-    assert libro.id == 1
-    assert libro.titulo == "El principito"
-    assert libro.precio == Decimal("1500.00")
-    assert libro.genero == "Fábula"
-
-
-def test_libro_response_genero_none():
-    libro = LibroResponse(
-        id=2,
-        titulo="Cuentos de terror",
-        isbn="978-987-1111-22-3",
-        precio=Decimal("2000.00"),
-        stock=5,
-        editorial="Ediciones Horizon",
-        genero=None,
-    )
-    assert libro.genero is None
-
-
-def test_libro_response_precio_invalido():
+def test_libro_autor_create_rol_invalido():
     with pytest.raises(ValidationError):
-        LibroResponse(
-            id=3,
-            titulo="Invalido",
-            isbn="123",
-            precio=Decimal("0.00"),
+        LibroAutorCreate(autor_id=1, rol="director", orden=1)
+
+
+def test_libro_create_valid():
+    libro_in = LibroCreate(
+        titulo="Manual de Python",
+        isbn="978-987-1234-56-7",
+        precio=Decimal("2500.00"),
+        stock=15,
+        editorial_id=1,
+        genero_id=2,
+        autores=[
+            LibroAutorCreate(autor_id=1, rol="autor", orden=1),
+            LibroAutorCreate(autor_id=2, rol="coautor", orden=2),
+        ],
+    )
+    assert libro_in.titulo == "Manual de Python"
+    assert len(libro_in.autores) == 2
+
+
+def test_libro_create_sin_autores():
+    with pytest.raises(ValidationError):
+        LibroCreate(
+            titulo="Sin autores",
+            isbn="978-000-0000-00-0",
+            precio=Decimal("1000.00"),
             stock=1,
-            editorial="UTN",
+            editorial_id=1,
+            autores=[],
         )
 
 
-def test_libro_detail_response_con_autores():
-    detalle = LibroDetailResponse(
-        id=1,
-        titulo="El principito",
-        isbn="978-84-376-0494-7",
-        precio=Decimal("1500.00"),
-        stock=10,
-        editorial_id=1,
-        editorial="Editorial Sudamericana",
-        genero_id=1,
-        genero="Fábula",
-        autores=[
-            LibroAutorDetailResponse(
-                autor_id=1,
-                nombre="Antoine de Saint-Exupéry",
-                rol="autor",
-                orden=1,
-            )
-        ],
-    )
-    assert len(detalle.autores) == 1
-    assert detalle.autores[0].nombre == "Antoine de Saint-Exupéry"
-    assert detalle.autores[0].rol == "autor"
+def test_libro_create_precio_cero():
+    with pytest.raises(ValidationError):
+        LibroCreate(
+            titulo="Gratis",
+            isbn="978-000-0000-00-1",
+            precio=Decimal("0.00"),
+            stock=1,
+            editorial_id=1,
+            autores=[LibroAutorCreate(autor_id=1)],
+        )
 
+
+def test_libro_create_stock_negativo():
+    with pytest.raises(ValidationError):
+        LibroCreate(
+            titulo="Negativo",
+            isbn="978-000-0000-00-2",
+            precio=Decimal("500.00"),
+            stock=-5,
+            editorial_id=1,
+            autores=[LibroAutorCreate(autor_id=1)],
+        )

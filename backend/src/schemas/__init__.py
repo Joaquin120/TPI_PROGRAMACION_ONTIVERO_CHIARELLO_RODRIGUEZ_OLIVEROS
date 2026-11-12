@@ -4,7 +4,9 @@ from src.schemas.libro import (
     AutorResponse,
     EditorialResponse,
     GeneroResponse,
+    LibroAutorCreate,
     LibroAutorDetailResponse,
+    LibroCreate,
     LibroDetailResponse,
     LibroListResponse,
     LibroResponse,
@@ -19,9 +21,10 @@ __all__ = [
     "EditorialResponse",
     "GeneroResponse",
     "AutorResponse",
+    "LibroAutorCreate",
     "LibroAutorDetailResponse",
+    "LibroCreate",
     "LibroResponse",
     "LibroDetailResponse",
     "LibroListResponse",
 ]
-
