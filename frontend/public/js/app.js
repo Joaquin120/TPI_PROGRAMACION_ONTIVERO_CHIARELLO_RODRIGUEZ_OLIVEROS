@@ -5,6 +5,14 @@
 
 'use strict';
 
+import {
+  cargarCatalogoApi,
+  inicializarEventosCatalogo,
+  estadoCatalogo,
+  formatearPrecio as formatearPrecioCatalog,
+  resolverEtiquetaGenero
+} from './catalog.js';
+
 // ============================================================
 // 1. MODELO DE DATOS INICIAL (IDs estables, datos ficticios)
 // ============================================================
@@ -301,33 +309,7 @@ function filtrarLibrosPorTitulo(termino) {
 }
 
 function renderCatalogo() {
-  const campoBusqueda = document.getElementById('catalogo-busqueda');
-  const mensajeSinResultados = document.getElementById('catalogo-sin-resultados');
-  const mensajeListadoVacio = document.getElementById('catalogo-listado-vacio');
-  const tabla = document.getElementById('tabla-catalogo');
-  const contenedorTabla = tabla.closest('.tabla-contenedor');
-
-  if (libros.length === 0) {
-    renderFilasLibros(tabla, []);
-    contenedorTabla.hidden = true;
-    mensajeSinResultados.hidden = true;
-    mensajeListadoVacio.hidden = false;
-    return;
-  }
-
-  mensajeListadoVacio.hidden = true;
-  const coincidencias = filtrarLibrosPorTitulo(campoBusqueda.value);
-
-  if (coincidencias.length === 0) {
-    renderFilasLibros(tabla, []);
-    contenedorTabla.hidden = true;
-    mensajeSinResultados.hidden = false;
-    return;
-  }
-
-  mensajeSinResultados.hidden = true;
-  contenedorTabla.hidden = false;
-  renderFilasLibros(tabla, coincidencias);
+  return cargarCatalogoApi();
 }
 
 function renderTablaLibrosRegistrados() {
@@ -963,16 +945,11 @@ function inicializar() {
   renderHistorial();
   renderDetalleVacio();
 
-  const campoBusqueda = document.getElementById('catalogo-busqueda');
-  campoBusqueda.value = '';
-  renderCatalogo();
-
-  // Buscador: submit (botón/Enter) y actualización en vivo con `input`.
-  document.querySelector('.buscador').addEventListener('submit', function (evento) {
-    evento.preventDefault();
-    renderCatalogo();
+  // Inicializar eventos y carga reactiva del Catálogo vía API REST
+  inicializarEventosCatalogo();
+  cargarCatalogoApi().catch(function (error) {
+    console.error('Error inicializando catálogo:', error);
   });
-  campoBusqueda.addEventListener('input', renderCatalogo);
 
   // Alta de libros y clientes.
   document.getElementById('form-alta-libro').addEventListener('submit', manejarAltaLibro);

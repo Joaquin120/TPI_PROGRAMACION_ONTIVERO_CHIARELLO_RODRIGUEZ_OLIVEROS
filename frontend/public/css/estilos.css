@@ -631,3 +631,193 @@ tfoot td {
     scroll-behavior: auto !important;
   }
 }
+
+/* ==========================================================================
+   ESTILOS ADICIONALES PARA CATÁLOGO, ESTADOS, PAGINACIÓN Y MODAL DE DETALLE
+   ========================================================================== */
+
+.indicador-carga {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espacio-3);
+  padding: var(--espacio-5);
+  font-size: var(--tamano-base);
+  font-weight: 600;
+  color: var(--color-primario);
+  background: var(--color-superficie-sutil);
+  border: 1px dashed var(--color-borde);
+  border-radius: var(--radio-md);
+  margin-bottom: var(--espacio-4);
+}
+
+.spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 3px solid var(--color-primario-claro);
+  border-top-color: var(--color-primario);
+  border-radius: 50%;
+  animation: girar-spinner 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes girar-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mensaje-error {
+  padding: var(--espacio-4);
+  background-color: var(--color-error-fondo);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radio-md);
+  color: var(--color-error);
+  font-weight: 500;
+  margin-bottom: var(--espacio-4);
+}
+
+.badge-sin-clasificar {
+  display: inline-block;
+  padding: var(--espacio-1) var(--espacio-2);
+  background-color: var(--color-superficie-sutil);
+  color: var(--color-texto-suave);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  font-size: var(--tamano-xs);
+  font-style: italic;
+}
+
+.paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  margin-top: var(--espacio-4);
+  padding: var(--espacio-3) var(--espacio-4);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-md);
+}
+
+.paginacion button {
+  padding: var(--espacio-2) var(--espacio-4);
+  font-size: var(--tamano-sm);
+  font-weight: 600;
+  border-radius: var(--radio-sm);
+}
+
+.paginacion button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.selector-limite {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+}
+
+.selector-limite select {
+  padding: var(--espacio-2) var(--espacio-3);
+  font-size: var(--tamano-sm);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  background-color: var(--color-superficie);
+}
+
+/* Modal accesible de autores y detalles */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(22, 33, 43, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--espacio-4);
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.modal-overlay[hidden] {
+  display: none !important;
+}
+
+.modal-contenido {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-md);
+  max-width: 34rem;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: aparecer-modal 0.2s ease-out;
+}
+
+@keyframes aparecer-modal {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--espacio-4) var(--espacio-5);
+  border-bottom: 1px solid var(--color-borde);
+  background-color: var(--color-superficie-sutil);
+}
+
+.modal-cabecera h3 {
+  margin: 0;
+  color: var(--color-primario-oscuro);
+  font-size: var(--tamano-lg);
+}
+
+.boton-cerrar {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+  padding: var(--espacio-1) var(--espacio-2);
+  border-radius: var(--radio-sm);
+}
+
+.boton-cerrar:hover,
+.boton-cerrar:focus-visible {
+  color: var(--color-error);
+  background-color: var(--color-error-fondo);
+}
+
+.modal-cuerpo {
+  padding: var(--espacio-5);
+}
+
+.modal-cuerpo p {
+  margin: 0 0 var(--espacio-2) 0;
+}
+
+.lista-autores {
+  list-style: none;
+  padding: 0;
+  margin: var(--espacio-3) 0 0 0;
+}
+
+.lista-autores li {
+  padding: var(--espacio-2) var(--espacio-3);
+  border-left: 3px solid var(--color-primario);
+  background-color: var(--color-superficie-sutil);
+  margin-bottom: var(--espacio-2);
+  border-radius: 0 var(--radio-sm) var(--radio-sm) 0;
+  font-size: var(--tamano-sm);
+}

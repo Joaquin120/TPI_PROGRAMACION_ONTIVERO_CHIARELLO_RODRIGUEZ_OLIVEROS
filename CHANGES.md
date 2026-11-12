@@ -124,7 +124,7 @@ Paso │ Agente A (Backend / Infra)         │ Agente B (Backend Aux / Funciona
 ---
 
 ### [C-03] `catalog-view-search`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**: Catálogo interactivo con búsqueda por título, paginación y detalle de autores (Ejercicio 1 / US-001, US-002, US-003):
   - Integración en `frontend/public/index.html` y `frontend/public/js/app.js` de la vista de Catálogo.
   - Carga inicial: consulta a `GET /api/libros/?limit=20&offset=0` al montar la vista.
