@@ -56,3 +56,4 @@ Si el backend responde con HTTP `409 Conflict` (por ejemplo ante un ISBN ya regi
 #### Scenario: Rechazo por error de validación de contrato (422)
 - **WHEN** el backend rechaza los datos con código 422 Unprocessable Entity
 - **THEN** la interfaz presenta los detalles del error recibido manteniendo el formulario en su estado actual
+
