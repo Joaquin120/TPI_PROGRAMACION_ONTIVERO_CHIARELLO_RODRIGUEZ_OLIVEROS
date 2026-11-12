@@ -23,11 +23,16 @@ def migration_module():
 
 
 def test_migration_chain_structure() -> None:
-    """Verifies that Alembic ScriptDirectory detects revision 002 as head with parent 001."""
+    """Verifies that Alembic ScriptDirectory detects revision 003 as head with parents 002 and 001."""
     cfg = Config("alembic.ini")
     script = ScriptDirectory.from_config(cfg)
     heads = script.get_heads()
-    assert heads == ["002"]
+    assert heads == ["003"]
+
+    rev_003 = script.get_revision("003")
+    assert rev_003 is not None
+    assert rev_003.revision == "003"
+    assert rev_003.down_revision == "002"
 
     rev_002 = script.get_revision("002")
     assert rev_002 is not None
@@ -119,3 +124,38 @@ def test_migration_upgrade_and_downgrade_execution(migration_module) -> None:
 
             inspector = inspect(conn)
             assert "items" not in inspector.get_table_names()
+
+
+@pytest.fixture
+def migration_module_003():
+    """Dynamically loads the 003_create_ventas migration revision."""
+    migration_path = Path("alembic/versions/003_create_ventas.py")
+    assert migration_path.exists(), f"Migration file not found at {migration_path}"
+
+    spec = importlib.util.spec_from_file_location("migration_003", migration_path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_migration_003_upgrade_and_downgrade(migration_module, migration_module_002, migration_module_003) -> None:
+    """Verifies upgrade and downgrade for ventas and ventas_renglones tables."""
+    test_engine = create_engine("sqlite:///:memory:")
+
+    with test_engine.connect() as conn:
+        ctx = MigrationContext.configure(conn)
+        with Operations.context(ctx):
+            migration_module.upgrade()
+            migration_module_002.upgrade()
+            migration_module_003.upgrade()
+
+            inspector = inspect(conn)
+            assert "ventas" in inspector.get_table_names()
+            assert "ventas_renglones" in inspector.get_table_names()
+
+            migration_module_003.downgrade()
+            inspector = inspect(conn)
+            assert "ventas_renglones" not in inspector.get_table_names()
+            assert "ventas" not in inspector.get_table_names()
+

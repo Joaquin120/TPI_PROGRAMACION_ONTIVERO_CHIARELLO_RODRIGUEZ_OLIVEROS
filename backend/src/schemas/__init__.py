@@ -12,6 +12,12 @@ from src.schemas.libro import (
     LibroListResponse,
     LibroResponse,
 )
+from src.schemas.venta import (
+    VentaCreate,
+    VentaRenglonCreate,
+    VentaRenglonResponse,
+    VentaResponse,
+)
 
 __all__ = [
     "HealthResponse",
@@ -30,5 +36,10 @@ __all__ = [
     "LibroListResponse",
     "ClienteCreate",
     "ClienteResponse",
+    "VentaCreate",
+    "VentaRenglonCreate",
+    "VentaRenglonResponse",
+    "VentaResponse",
 ]
+
 

@@ -190,7 +190,7 @@ Paso │ Agente A (Backend / Infra)         │ Agente B (Backend Aux / Funciona
 ## FASE 3 — Ejercicio 3: Registrar y Consultar Ventas
 
 ### [C-06] `ventas-borrador-registro`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**: Borrador de venta en memoria y confirmación transaccional (Ejercicio 3A / US-006, US-007):
   - Estado del borrador en memoria JavaScript (`app.js`): estructura `{ cliente_id: null, renglones: [] }` sin persistencia prematura en backend.
   - Selección de cliente con validación visual consultando `GET /api/clientes/{id}`.
