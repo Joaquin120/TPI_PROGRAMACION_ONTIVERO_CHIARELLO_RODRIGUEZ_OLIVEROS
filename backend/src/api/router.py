@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from src.api.v1.endpoints import autores, editoriales, generos, health, items, libros
+from src.api.v1.endpoints import autores, clientes, editoriales, generos, health, items, libros
 
 api_router = APIRouter()
 
@@ -15,6 +15,10 @@ api_router.include_router(items.router, prefix="/api/v1/items")
 # Libros routes
 api_router.include_router(libros.router, prefix="/libros")
 api_router.include_router(libros.router, prefix="/api/v1/libros")
+
+# Clientes routes
+api_router.include_router(clientes.router, prefix="/clientes")
+api_router.include_router(clientes.router, prefix="/api/v1/clientes")
 
 # Editoriales routes
 api_router.include_router(editoriales.router, prefix="/editoriales")

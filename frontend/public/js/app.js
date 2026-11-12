@@ -18,6 +18,12 @@ import {
   estadoAltaLibro
 } from './books.js';
 
+import {
+  inicializarEventosClientes,
+  cargarClientes,
+  estadoClientes
+} from './clients.js';
+
 // ============================================================
 // 1. MODELO DE DATOS INICIAL (IDs estables, datos ficticios)
 // ============================================================
@@ -963,8 +969,11 @@ function inicializar() {
     }
   });
 
-  // Alta de clientes.
-  document.getElementById('form-alta-cliente').addEventListener('submit', manejarAltaCliente);
+  // Inicializar eventos y carga reactiva de Clientes vía API REST
+  inicializarEventosClientes({ context: document });
+  cargarClientes({ context: document }).catch(function (error) {
+    console.error('Error inicializando clientes:', error);
+  });
 
   // Composición y confirmación de la venta.
   document.getElementById('venta-agregar').addEventListener('click', manejarAgregarRenglon);

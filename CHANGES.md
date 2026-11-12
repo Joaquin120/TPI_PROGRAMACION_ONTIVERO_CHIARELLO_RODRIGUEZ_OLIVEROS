@@ -168,7 +168,7 @@ Paso │ Agente A (Backend / Infra)         │ Agente B (Backend Aux / Funciona
 ---
 
 ### [C-05] `alta-clientes`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**: Formulario de alta de clientes y consulta por identificador (Ejercicio 2B / US-005):
   - Formulario de alta de clientes en `frontend/public/index.html` con campos obligatorios `nombre` y `email`.
   - Validación sintáctica en cliente del formato de correo electrónico y completitud de datos (RN-CLI-02).

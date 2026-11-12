@@ -23,16 +23,54 @@ def migration_module():
 
 
 def test_migration_chain_structure() -> None:
-    """Verifies that Alembic ScriptDirectory detects revision 001 as root head without parent."""
+    """Verifies that Alembic ScriptDirectory detects revision 002 as head with parent 001."""
     cfg = Config("alembic.ini")
     script = ScriptDirectory.from_config(cfg)
     heads = script.get_heads()
-    assert heads == ["001"]
+    assert heads == ["002"]
 
-    revision = script.get_revision("001")
-    assert revision is not None
-    assert revision.revision == "001"
-    assert revision.down_revision is None
+    rev_002 = script.get_revision("002")
+    assert rev_002 is not None
+    assert rev_002.revision == "002"
+    assert rev_002.down_revision == "001"
+
+    rev_001 = script.get_revision("001")
+    assert rev_001 is not None
+    assert rev_001.revision == "001"
+    assert rev_001.down_revision is None
+
+
+@pytest.fixture
+def migration_module_002():
+    """Dynamically loads the 002_create_clientes migration revision."""
+    migration_path = Path("alembic/versions/002_create_clientes.py")
+    assert migration_path.exists(), f"Migration file not found at {migration_path}"
+
+    spec = importlib.util.spec_from_file_location("migration_002", migration_path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_migration_002_upgrade_and_downgrade(migration_module, migration_module_002) -> None:
+    """Verifies upgrade and downgrade for clientes table."""
+    test_engine = create_engine("sqlite:///:memory:")
+
+    with test_engine.connect() as conn:
+        ctx = MigrationContext.configure(conn)
+        with Operations.context(ctx):
+            migration_module.upgrade()
+            migration_module_002.upgrade()
+
+            inspector = inspect(conn)
+            assert "clientes" in inspector.get_table_names()
+            columns = {col["name"] for col in inspector.get_columns("clientes")}
+            assert {"id", "nombre", "email"}.issubset(columns)
+
+            migration_module_002.downgrade()
+            inspector = inspect(conn)
+            assert "clientes" not in inspector.get_table_names()
 
 
 def test_migration_file_identifiers(migration_module) -> None:

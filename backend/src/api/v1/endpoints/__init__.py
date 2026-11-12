@@ -1,3 +1,3 @@
-from src.api.v1.endpoints import autores, editoriales, generos, health, items, libros
+from src.api.v1.endpoints import autores, clientes, editoriales, generos, health, items, libros
 
-__all__ = ["health", "items", "libros", "editoriales", "generos", "autores"]
+__all__ = ["health", "items", "libros", "editoriales", "generos", "autores", "clientes"]

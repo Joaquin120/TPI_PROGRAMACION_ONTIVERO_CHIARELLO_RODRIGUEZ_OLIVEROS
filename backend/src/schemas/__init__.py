@@ -1,3 +1,4 @@
+from src.schemas.cliente import ClienteCreate, ClienteResponse
 from src.schemas.health import HealthResponse
 from src.schemas.item import ItemCreate, ItemListResponse, ItemResponse, ItemUpdate
 from src.schemas.libro import (
@@ -27,4 +28,7 @@ __all__ = [
     "LibroResponse",
     "LibroDetailResponse",
     "LibroListResponse",
+    "ClienteCreate",
+    "ClienteResponse",
 ]
+

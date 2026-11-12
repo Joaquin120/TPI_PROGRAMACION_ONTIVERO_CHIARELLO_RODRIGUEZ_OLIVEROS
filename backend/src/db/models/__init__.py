@@ -1,4 +1,5 @@
 from src.db.models.autor import Autor
+from src.db.models.cliente import Cliente
 from src.db.models.editorial import Editorial
 from src.db.models.genero import Genero
 from src.db.models.item import Item
@@ -12,4 +13,5 @@ __all__ = [
     "Autor",
     "Libro",
     "LibroAutor",
+    "Cliente",
 ]
