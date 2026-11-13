@@ -14,3 +14,7 @@ class ReadinessResponse(BaseModel):
 
     status: str
     database: str
+
+
+HealthResponse = HealthStatusResponse
+

@@ -18,6 +18,18 @@ import {
   estadoAltaLibro
 } from './books.js';
 
+import {
+  inicializarEventosClientes,
+  cargarClientes,
+  estadoClientes
+} from './clients.js';
+
+import {
+  inicializarEventosVentas,
+  sincronizarSelectorVentaLibros,
+  estadoVenta
+} from './sales.js';
+
 // ============================================================
 // 1. MODELO DE DATOS INICIAL (IDs estables, datos ficticios)
 // ============================================================
@@ -952,23 +964,38 @@ function inicializar() {
 
   // Inicializar eventos y carga reactiva del Catálogo vía API REST
   inicializarEventosCatalogo();
-  cargarCatalogoApi().catch(function (error) {
+  cargarCatalogoApi().then(function (libros) {
+    if (Array.isArray(libros) && libros.length > 0) {
+      sincronizarSelectorVentaLibros(libros, document);
+    }
+  }).catch(function (error) {
     console.error('Error inicializando catálogo:', error);
   });
 
   // Inicializar eventos y carga reactiva del Alta de Libros vía API REST
   inicializarEventosAltaLibro(document, {
     onExito: function () {
-      cargarCatalogoApi().catch(console.error);
+      cargarCatalogoApi().then(function (libros) {
+        if (Array.isArray(libros) && libros.length > 0) {
+          sincronizarSelectorVentaLibros(libros, document);
+        }
+      }).catch(console.error);
     }
   });
 
-  // Alta de clientes.
-  document.getElementById('form-alta-cliente').addEventListener('submit', manejarAltaCliente);
+  // Inicializar eventos y carga reactiva de Clientes vía API REST
+  inicializarEventosClientes({ context: document });
+  cargarClientes({ context: document }).catch(function (error) {
+    console.error('Error inicializando clientes:', error);
+  });
 
-  // Composición y confirmación de la venta.
-  document.getElementById('venta-agregar').addEventListener('click', manejarAgregarRenglon);
-  document.getElementById('venta-confirmar').addEventListener('click', manejarConfirmarVenta);
+  // Inicializar eventos y gestión del borrador de Ventas vía API REST (C-06)
+  inicializarEventosVentas({
+    context: document,
+    onExito: function (venta) {
+      console.log('Venta confirmada exitosamente vía API:', venta);
+    }
+  });
 
   // Acceso al detalle desde el historial (delegación sobre el tbody).
   document.getElementById('tabla-historial').querySelector('tbody').addEventListener('click', manejarClicHistorial);
