@@ -484,3 +484,64 @@ async def test_patch_libro_relaciones_y_payload_vacio(ventas_client: httpx.Async
     assert (await ventas_client.patch("/libros/1", json={"editorial_id": 999})).status_code == 422
     assert (await ventas_client.patch("/libros/1", json={"genero_id": 999})).status_code == 422
     assert (await ventas_client.patch("/libros/1", json={"editorial_id": None})).status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_post_venta_recarga_relaciones_tras_commit_y_refresh(ventas_db) -> None:
+    """Regresión: verifica que create_venta recargue cliente y renglones vía selectinload tras commit/refresh."""
+    assert Venta.cliente.property.lazy == "selectin"
+
+    class RefreshExpiringVentasSession(FakeVentasAsyncSession):
+        def __init__(self, data: dict[str, Any]) -> None:
+            super().__init__(
+                data["clientes"],
+                data["libros"],
+                data["ventas"],
+                data["renglones"],
+                data["editoriales"],
+                data["generos"],
+            )
+            self._expired_snapshots: dict[int, tuple[Any, list[Any]]] = {}
+
+        async def refresh(self, instance: Any) -> None:
+            if isinstance(instance, Venta) and instance.id is not None:
+                self._expired_snapshots[instance.id] = (
+                    instance.cliente,
+                    list(instance.renglones),
+                )
+                instance.cliente = None  # type: ignore[assignment]
+                instance.renglones = []
+
+        async def execute(self, statement: Any) -> FakeResult:
+            result = await super().execute(statement)
+            sql_str = str(statement).lower()
+            has_eager_options = len(getattr(statement, "_with_options", ())) >= 2
+            if "from ventas" in sql_str and has_eager_options:
+                for v in result._data:
+                    if isinstance(v, Venta) and v.id in self._expired_snapshots:
+                        cli, rengs = self._expired_snapshots.pop(v.id)
+                        v.cliente = cli
+                        v.renglones = rengs
+            return result
+
+    session = RefreshExpiringVentasSession(ventas_db)
+
+    async def override_get_db() -> AsyncGenerator[FakeVentasAsyncSession, None]:
+        yield session
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+            res = await client.post(
+                "/api/v1/ventas/",
+                json={"cliente_id": 1, "renglones": [{"libro_id": 1, "cantidad": 2}]},
+            )
+        assert res.status_code == 201
+        data = res.json()
+        assert data["cliente_nombre"] == "Ana Beltrán"
+        assert len(data["renglones"]) == 1
+        assert data["renglones"][0]["titulo"] == "El principito"
+        assert data["total"] == 3000.0
+    finally:
+        app.dependency_overrides.pop(get_db, None)

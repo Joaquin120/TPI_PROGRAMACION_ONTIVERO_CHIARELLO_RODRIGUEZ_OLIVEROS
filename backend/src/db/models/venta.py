@@ -17,7 +17,7 @@ class Venta(Base):
     )
     total: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
 
-    cliente: Mapped["Cliente"] = relationship("Cliente")
+    cliente: Mapped["Cliente"] = relationship("Cliente", lazy="selectin")
     renglones: Mapped[list["VentaRenglon"]] = relationship(
         "VentaRenglon",
         back_populates="venta",

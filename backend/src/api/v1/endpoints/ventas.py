@@ -104,6 +104,18 @@ async def create_venta(
     try:
         await db.commit()
         await db.refresh(venta)
+        stmt_reload = (
+            select(Venta)
+            .options(
+                selectinload(Venta.cliente),
+                selectinload(Venta.renglones).selectinload(VentaRenglon.libro),
+            )
+            .where(Venta.id == venta.id)
+            .execution_options(populate_existing=True)
+        )
+        venta_cargada = (await db.execute(stmt_reload)).scalar_one_or_none()
+        if venta_cargada is not None:
+            venta = venta_cargada
     except Exception as exc:
         await db.rollback()
         raise HTTPException(
