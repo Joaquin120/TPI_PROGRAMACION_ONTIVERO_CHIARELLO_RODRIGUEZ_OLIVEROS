@@ -254,7 +254,7 @@ Paso │ Agente A (Backend / Infra)         │ Agente B (Backend Aux / Funciona
 ## FASE 5 — Ejercicio 5: Servicios en Easypanel y Verificación G-01 a G-07
 
 ### [C-09] `easypanel-deploy-verification`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**: Despliegue en VPS con Easypanel, documentación operativa y verificación de casos G-01 a G-07 (Ejercicio 5):
   - Configuración del servicio `backend` en Easypanel: tipo App, build path `/backend`, builder Dockerfile, variable `DATABASE_URL` conectada a PostgreSQL, puerto interno 8000 aislado en red privada.
   - Configuración del servicio `frontend` en Easypanel: tipo App, build path `/frontend`, builder Dockerfile, variable `API_UPSTREAM=<backend_service_name>:8000`, dominio público con HTTPS forzado apuntando al puerto 80.

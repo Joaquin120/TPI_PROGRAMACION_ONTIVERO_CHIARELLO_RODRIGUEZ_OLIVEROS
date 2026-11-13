@@ -6,43 +6,43 @@ Registro técnico de infraestructura, variables de entorno, mapeo de puertos, mi
 
 ## 1. Datos del Despliegue Público
 
-> Completar los valores reales inmediatamente después de desplegar ambos servicios en Easypanel.
-
-- **URL Pública HTTPS (Frontend):** _completar tras crear dominio en Easypanel_
-- **Commit Hash Desplegado:** _completar con `git rev-parse HEAD` del despliegue efectivo_
-- **Rama Desplegada:** `main` (o rama configurada en Easypanel)
-- **Endpoint de Readiness Público:** `<URL_PUBLICA_HTTPS>/api/health/ready`
+- **URL Pública HTTPS (Frontend):** https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/
+- **Commit Hash Desplegado y Verificado (G-01..G-07):** `ef80ead594ecd8e99977b70ededb2c07235e40df` *(rama `feat/c07-c09` lista para promoción a `main`)*
+- **Rama Configurada Durante Verificación E2E:** `feat/c07-c09`
+- **Endpoint de Readiness Público:** `https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/health/ready` → HTTP `200` (`{"status":"ready","database":"connected"}`)
+- **Endpoint de Liveness Público:** `https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/health/live` → HTTP `200` (`{"status":"healthy","version":"0.1.0","environment":"production"}`)
 
 ---
 
 ## 2. Arquitectura y Configuración de Servicios en Easypanel
 
-### 2.1 Base de Datos (`db`)
-- **Motor:** PostgreSQL 16 (servicio gestionado en Easypanel dentro de la red privada del proyecto).
-- **Credenciales y conexión:** provistas únicamente mediante la variable de entorno `DATABASE_URL` en el servicio `backend` (nunca versionar secretos reales en el repositorio).
+### 2.1 Base de Datos (`libreria-tpi-db`)
+- **Motor:** PostgreSQL 16 (servicio gestionado en Easypanel dentro de la red privada del proyecto `jjoc`).
+- **Host interno observado:** `jjoc_libreria-tpi-db` (puerto interno `5432`).
+- **Credenciales y conexión:** provistas únicamente mediante la variable de entorno `DATABASE_URL` en el servicio `libreria-tpi-backend` (nunca versionar secretos reales en el repositorio).
 
-### 2.2 Servicio Backend (`backend`)
+### 2.2 Servicio Backend (`libreria-tpi-backend`)
 - **Tipo de servicio:** `App`
-- **Nombre de servicio (referencia interna):** `<nombre_servicio_backend>` (ejemplo en Easypanel: `<proyecto>_backend`)
+- **Host interno / referencia en red privada:** `jjoc_libreria-tpi-backend`
 - **Build Path:** `/backend`
 - **Builder:** `Dockerfile` (`backend/Dockerfile`)
 - **Puerto interno:** `8000` (aislado en red privada Docker, sin dominio público expuesto)
 - **Variables de entorno requeridas:**
-  - `DATABASE_URL=postgresql+asyncpg://<usuario>:<password>@<host_postgres>:5432/<database>`
+  - `DATABASE_URL=postgresql+asyncpg://<usuario>:<password>@jjoc_libreria-tpi-db:5432/<nombre_db>` *(reemplazar el esquema inicial de Easypanel por `postgresql+asyncpg://` y quitar parámetros `?sslmode=...` al final porque `asyncpg` no acepta `sslmode` como argumento)*
   - `ENVIRONMENT=production`
 - **Comando de arranque del contenedor:**
   ```sh
   alembic upgrade head && python -m src.db.seed && exec uvicorn src.main:app --host 0.0.0.0 --port 8000
   ```
 
-### 2.3 Servicio Frontend (`frontend`)
+### 2.3 Servicio Frontend (`libreria-tpi-frontend`)
 - **Tipo de servicio:** `App`
 - **Build Path:** `/frontend`
 - **Builder:** `Dockerfile` (`frontend/Dockerfile` basado en `nginx:1.26-alpine`)
 - **Puerto interno:** `80`
-- **Dominios (Domains):** dominio público HTTPS asignado por Easypanel apuntando al puerto `80` HTTP del contenedor.
+- **Dominios (Domains):** `https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/` → `http://jjoc_libreria-tpi-frontend:80/` (HTTPS gestionado por Easypanel).
 - **Variables de entorno requeridas:**
-  - `API_UPSTREAM=<nombre_servicio_backend>:8000` (ejemplo: `libreria_backend:8000`)
+  - `API_UPSTREAM=jjoc_libreria-tpi-backend:8000` *(sin prefijo `http://` ni barra `/` final)*
   - `NGINX_ENVSUBST_FILTER=^API_UPSTREAM$` *(definida en `frontend/Dockerfile` para no sobrescribir `$uri` en `default.conf.template`)*
 
 ---

@@ -1,0 +1,27 @@
+﻿[G-07 live] GET https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/health/live -> HTTP 200
+  body: {"status": "healthy", "version": "0.1.0", "environment": "production"}
+[G-07 ready] GET https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/health/ready -> HTTP 200
+  body: {"status": "ready", "database": "connected"}
+[G-01 page1] GET https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/libros/?limit=2&offset=0 -> HTTP 200
+  body: [{"id": 1, "titulo": "Cien años de soledad", "isbn": "9788439733072", "precio": "25000.00", "stock": 15, "editorial": "Sudamericana", "genero": "Ficción"}, {"id": 2, "titulo": "Ficciones", "isbn": "9788499089508", "precio": "18500.00", "stock": 20, "editorial": "Alianza", "genero": "Ficción"}]
+[G-01 page2] GET https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/libros/?limit=2&offset=2 -> HTTP 200
+  body: [{"id": 3, "titulo": "Rayuela", "isbn": "9788420471891", "precio": "22000.00", "stock": 12, "editorial": "Planeta", "genero": "Ficción"}, {"id": 4, "titulo": "El Aleph E2E", "isbn": "9789875669901", "precio": "24500.00", "stock": 20, "editorial": "Alianza", "genero": null}]
+[G-01 search hit] GET https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/libros/?titulo=soledad -> HTTP 200
+  body: [{"id": 1, "titulo": "Cien años de soledad", "isbn": "9788439733072", "precio": "25000.00", "stock": 15, "editorial": "Sudamericana", "genero": "Ficción"}]
+[G-01 search empty] GET https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/libros/?titulo=NOEXISTE_XYZ_999 -> HTTP 200
+  body: []
+[G-01/G-05 book4] GET https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/libros/4 -> HTTP 200
+  body: {"id": 4, "titulo": "El Aleph E2E", "isbn": "9789875669901", "precio": "24500.00", "stock": 20, "editorial_id": 3, "editorial": "Alianza", "genero_id": null, "genero": null, "autores": [{"autor_id": 2, "nombre": "Jorge Luis Borges", "rol": "autor", "orden": 1}]}
+[G-03 client2] GET https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/clientes/2 -> HTTP 200
+  body: {"nombre": "Ana Gómez E2E", "email": "ana.gomez.e2e@example.com", "id": 2}
+[G-05 venta1] GET https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/ventas/1 -> HTTP 200
+  body: {"id": 1, "cliente_id": 2, "cliente_nombre": "Ana Gómez E2E", "fecha": "2026-11-13T20:51:08.400479Z", "total": 48500.0, "renglones": [{"id": 1, "libro_id": 4, "titulo": "El Aleph E2E", "cantidad": 2, "precio_unitario": 15000.0, "subtotal": 30000.0}, {"id": 2, "libro_id": 2, "titulo": "Ficciones", "cantidad": 1, "precio_unitario": 18500.0, "subtotal": 18500.0}]}
+[G-05 venta3] GET https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/ventas/3 -> HTTP 200
+  body: {"id": 3, "cliente_id": 2, "cliente_nombre": "Ana Gómez E2E", "fecha": "2026-11-13T23:27:50.989585Z", "total": 46000.0, "renglones": [{"id": 5, "libro_id": 4, "titulo": "El Aleph E2E", "cantidad": 1, "precio_unitario": 21000.0, "subtotal": 21000.0}, {"id": 6, "libro_id": 1, "titulo": "Cien años de soledad", "cantidad": 1, "precio_unitario": 25000.0, "subtotal": 25000.0}]}
+[G-06 dup libro 422] POST https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/ventas/ -> HTTP 422
+  body: {"detail": [{"type": "value_error", "loc": ["body", "renglones"], "msg": "Value error, No se permite incluir el mismo libro en más de un renglón de la venta (RN-VEN-04)", "input": [{"libro_id": 1, "cantidad": 1}, {"libro_id": 1, "cantidad": 2}], "ctx": {"error": {}}}]}
+[G-06 no cliente 409] POST https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/ventas/ -> HTTP 409
+  body: {"detail": "El cliente con ID 999999 no existe"}
+[G-06 no libro 409] POST https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/ventas/ -> HTTP 409
+  body: {"detail": "El libro con ID 999999 no existe"}
+ALL API ASSERTIONS PASSED. ventas count unchanged = 3
