@@ -368,6 +368,113 @@ export async function enviarAltaLibro(evento, opciones = {}) {
 }
 
 /**
+ * Renderiza el listado de libros registrados en #tabla-libros y sincroniza el selector de ajuste de precio.
+ * @param {Array<Object>} libros
+ * @param {Document|HTMLElement} [doc=document]
+ */
+export function renderizarTablaLibrosRegistrados(libros, doc = document) {
+  if (!doc) return;
+  const tabla = doc.getElementById('tabla-libros');
+  const avisoVacio = doc.getElementById('libros-listado-vacio');
+  const selectEditar = doc.getElementById('libro-precio-editar-id');
+  const lista = Array.isArray(libros) ? libros : [];
+
+  if (selectEditar) {
+    selectEditar.innerHTML = '<option value="" disabled selected>Seleccione un libro</option>';
+    lista.forEach((libro) => {
+      const opt = doc.createElement('option');
+      opt.value = String(libro.id);
+      opt.dataset.precio = String(libro.precio);
+      opt.textContent = `${libro.titulo} — $${Number(libro.precio).toFixed(2).replace('.', ',')}`;
+      selectEditar.appendChild(opt);
+    });
+  }
+
+  if (!tabla) return;
+  const tbody = tabla.querySelector ? tabla.querySelector('tbody') : null;
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+  if (lista.length === 0) {
+    if (avisoVacio) avisoVacio.hidden = false;
+    return;
+  }
+
+  if (avisoVacio) avisoVacio.hidden = true;
+  lista.forEach((libro) => {
+    const tr = doc.createElement('tr');
+    const valores = [
+      libro.titulo,
+      libro.isbn,
+      libro.editorial || 'Desconocida',
+      libro.genero || 'Sin clasificar',
+      String(libro.stock ?? 0),
+      '$' + Number(libro.precio).toFixed(2).replace('.', ','),
+    ];
+    valores.forEach((val) => {
+      const td = doc.createElement('td');
+      td.textContent = val;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+/**
+ * Actualiza el precio de un libro vía PATCH /api/libros/{id} sin alterar ventas históricas (G-05).
+ * @param {Event} [evento]
+ * @param {Object} [opciones={}]
+ */
+export async function enviarActualizarPrecioLibro(evento, opciones = {}) {
+  if (evento) evento.preventDefault();
+  const client = opciones.apiClient || (typeof window !== 'undefined' ? window.api : defaultApi);
+  const doc = opciones.context || (typeof document !== 'undefined' ? document : null);
+  if (!doc) return null;
+
+  const selectLibro = doc.getElementById('libro-precio-editar-id');
+  const inputPrecio = doc.getElementById('libro-precio-nuevo');
+  const feedbackEl = doc.getElementById('libro-precio-feedback');
+  const btnSubmit = doc.getElementById('libro-precio-btn-submit');
+
+  const libroId = selectLibro ? parseInt(selectLibro.value, 10) : NaN;
+  const nuevoPrecio = inputPrecio ? parseFloat(inputPrecio.value) : NaN;
+
+  if (isNaN(libroId) || libroId <= 0 || isNaN(nuevoPrecio) || nuevoPrecio <= 0) {
+    if (feedbackEl) {
+      feedbackEl.className = 'mensaje feedback-error';
+      feedbackEl.textContent = 'Error — Seleccione un libro e ingrese un precio válido mayor a cero.';
+      feedbackEl.hidden = false;
+    }
+    return null;
+  }
+
+  try {
+    if (btnSubmit) btnSubmit.disabled = true;
+    const actualizado = await client.patch(`/libros/${libroId}`, { precio: nuevoPrecio });
+    if (feedbackEl) {
+      feedbackEl.className = 'mensaje feedback-exito';
+      feedbackEl.textContent = `OK — Precio de «${actualizado.titulo}» actualizado a $${Number(actualizado.precio).toFixed(2).replace('.', ',')}. Las ventas previas conservan su precio histórico.`;
+      feedbackEl.hidden = false;
+    }
+    if (inputPrecio) inputPrecio.value = '';
+    if (typeof opciones.onExito === 'function') {
+      opciones.onExito(actualizado);
+    }
+    return actualizado;
+  } catch (error) {
+    if (feedbackEl) {
+      feedbackEl.className = 'mensaje feedback-error';
+      const detail = error.data && error.data.detail ? error.data.detail : error.message;
+      feedbackEl.textContent = `Error — No se pudo actualizar el precio: ${detail}`;
+      feedbackEl.hidden = false;
+    }
+    throw error;
+  } finally {
+    if (btnSubmit) btnSubmit.disabled = false;
+  }
+}
+
+/**
  * Inicializa todos los eventos y carga de datos para el formulario de alta de libros.
  * @param {Document|HTMLElement} [doc=document]
  * @param {Object} [opciones={}]
@@ -401,6 +508,12 @@ export function inicializarEventosAltaLibro(doc = document, opciones = {}) {
   cargarEditorialesYGeneros({ ...opciones, context: doc }).catch((err) => {
     console.error('Error al inicializar editoriales y géneros:', err);
   });
+
+  const formPrecio = doc.getElementById('form-actualizar-precio-libro');
+  if (formPrecio && !formPrecio.dataset.priceInitialized) {
+    formPrecio.addEventListener('submit', (e) => enviarActualizarPrecioLibro(e, { ...opciones, context: doc }));
+    formPrecio.dataset.priceInitialized = 'true';
+  }
 }
 
 // Exposición global para navegador
@@ -414,6 +527,8 @@ if (typeof window !== 'undefined') {
     validarDatosLibro,
     enviarAltaLibro,
     limpiarFormularioLibro,
+    renderizarTablaLibrosRegistrados,
+    enviarActualizarPrecioLibro,
     inicializarEventosAltaLibro,
   };
 }

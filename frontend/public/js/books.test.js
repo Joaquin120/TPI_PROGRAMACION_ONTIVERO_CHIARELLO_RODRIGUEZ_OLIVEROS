@@ -9,6 +9,8 @@ import {
   validarDatosLibro,
   limpiarFormularioLibro,
   enviarAltaLibro,
+  renderizarTablaLibrosRegistrados,
+  enviarActualizarPrecioLibro,
 } from './books.js';
 
 function crearMockElement(tag = 'div', id = '') {
@@ -311,5 +313,130 @@ describe('Alta de Libros: Envío de formulario y resiliencia ante errores (envia
     const feedback = mockDoc.getElementById('libros-feedback');
     assert.strictEqual(feedback.hidden, false);
     assert.ok(feedback.textContent.includes('ya se encuentra registrado'));
+  });
+});
+
+describe('Actualización de precio y listado en Libros (C-07 / G-05)', () => {
+  function crearMockDocumentLibros() {
+    const tbodyLibros = crearMockElement('tbody', 'tbody-libros');
+    const tablaLibros = crearMockElement('table', 'tabla-libros');
+    tablaLibros.querySelector = (sel) => (sel === 'tbody' ? tbodyLibros : null);
+
+    const elements = {
+      'tabla-libros': tablaLibros,
+      'libros-listado-vacio': crearMockElement('p', 'libros-listado-vacio'),
+      'libro-precio-editar-id': crearMockElement('select', 'libro-precio-editar-id'),
+      'libro-precio-nuevo': crearMockElement('input', 'libro-precio-nuevo'),
+      'libro-precio-feedback': crearMockElement('div', 'libro-precio-feedback'),
+      'libro-precio-btn-submit': crearMockElement('button', 'libro-precio-btn-submit'),
+    };
+
+    return {
+      getElementById(id) {
+        if (!elements[id]) {
+          elements[id] = crearMockElement('div', id);
+        }
+        return elements[id];
+      },
+      createElement(tag) {
+        return crearMockElement(tag);
+      },
+    };
+  }
+
+  it('renderizarTablaLibrosRegistrados renderiza filas con género «Sin clasificar» y sincroniza selector de edición', () => {
+    const mockDoc = crearMockDocumentLibros();
+
+    renderizarTablaLibrosRegistrados([], mockDoc);
+    assert.strictEqual(mockDoc.getElementById('libros-listado-vacio').hidden, false);
+
+    renderizarTablaLibrosRegistrados(
+      [
+        {
+          id: 1,
+          titulo: 'El principito',
+          isbn: '978-84-376-0494-7',
+          editorial: 'Planeta',
+          genero: null,
+          stock: 10,
+          precio: 1500,
+        },
+      ],
+      mockDoc,
+    );
+
+    assert.strictEqual(mockDoc.getElementById('libros-listado-vacio').hidden, true);
+    const tbody = mockDoc.getElementById('tabla-libros').querySelector('tbody');
+    assert.strictEqual(tbody.children.length, 1);
+    assert.strictEqual(tbody.children[0].children[3].textContent, 'Sin clasificar');
+    assert.strictEqual(tbody.children[0].children[5].textContent, '$1500,00');
+
+    const selectEditar = mockDoc.getElementById('libro-precio-editar-id');
+    assert.strictEqual(selectEditar.children.length, 1);
+    assert.strictEqual(selectEditar.children[0].value, '1');
+  });
+
+  it('enviarActualizarPrecioLibro valida datos localmente y envía PATCH /libros/{id} en caso válido', async () => {
+    const mockDoc = crearMockDocumentLibros();
+    let patchLlamado = false;
+    let payloadEnviado = null;
+    let onExitoRecibido = null;
+
+    const mockApi = {
+      async patch(endpoint, body) {
+        patchLlamado = true;
+        payloadEnviado = { endpoint, body };
+        return { id: 1, titulo: 'El principito', precio: body.precio };
+      },
+    };
+
+    // Caso inválido: sin libro ni precio positivo
+    mockDoc.getElementById('libro-precio-editar-id').value = '';
+    mockDoc.getElementById('libro-precio-nuevo').value = '0';
+    const invalido = await enviarActualizarPrecioLibro(null, { apiClient: mockApi, context: mockDoc });
+    assert.strictEqual(invalido, null);
+    assert.strictEqual(patchLlamado, false);
+    assert.strictEqual(mockDoc.getElementById('libro-precio-feedback').hidden, false);
+
+    // Caso válido
+    mockDoc.getElementById('libro-precio-editar-id').value = '1';
+    mockDoc.getElementById('libro-precio-nuevo').value = '2750.00';
+    const btn = mockDoc.getElementById('libro-precio-btn-submit');
+    const actualizado = await enviarActualizarPrecioLibro(null, {
+      apiClient: mockApi,
+      context: mockDoc,
+      onExito: (libro) => { onExitoRecibido = libro; },
+    });
+
+    assert.strictEqual(payloadEnviado.endpoint, '/libros/1');
+    assert.strictEqual(payloadEnviado.body.precio, 2750);
+    assert.strictEqual(actualizado.precio, 2750);
+    assert.strictEqual(onExitoRecibido.id, 1);
+    assert.strictEqual(btn.disabled, false);
+    assert.strictEqual(mockDoc.getElementById('libro-precio-nuevo').value, '');
+    assert.match(mockDoc.getElementById('libro-precio-feedback').textContent, /OK — Precio/);
+  });
+
+  it('enviarActualizarPrecioLibro muestra error HTTP y rehabilita botón ante falla', async () => {
+    const mockDoc = crearMockDocumentLibros();
+    mockDoc.getElementById('libro-precio-editar-id').value = '999';
+    mockDoc.getElementById('libro-precio-nuevo').value = '2100';
+
+    const mockApiError = {
+      async patch() {
+        const err = new Error('Not Found');
+        err.status = 404;
+        err.data = { detail: 'Libro con ID 999 no encontrado' };
+        throw err;
+      },
+    };
+
+    await assert.rejects(
+      () => enviarActualizarPrecioLibro(null, { apiClient: mockApiError, context: mockDoc }),
+      /Not Found/,
+    );
+    assert.strictEqual(mockDoc.getElementById('libro-precio-btn-submit').disabled, false);
+    assert.strictEqual(mockDoc.getElementById('libro-precio-feedback').hidden, false);
+    assert.match(mockDoc.getElementById('libro-precio-feedback').textContent, /no encontrado/);
   });
 });

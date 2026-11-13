@@ -191,6 +191,30 @@
       <!-- Resultado de la operación (éxito o rechazo 409/422) -->
       <div id="libros-feedback" class="mensaje" role="status" aria-live="polite" hidden></div>
 
+      <form id="form-actualizar-precio-libro" aria-label="Formulario para actualizar el precio de un libro en catálogo">
+        <fieldset>
+          <legend>Actualizar precio en catálogo (PATCH /api/libros/{id})</legend>
+
+          <div>
+            <label for="libro-precio-editar-id">Libro del catálogo:</label>
+            <select id="libro-precio-editar-id" name="libro-precio-editar-id" required>
+              <option value="" disabled selected>Seleccione un libro</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="libro-precio-nuevo">Nuevo precio:</label>
+            <input type="number" id="libro-precio-nuevo" name="libro-precio-nuevo" min="0.01" step="0.01" required placeholder="Ej.: 2750.00">
+          </div>
+
+          <div>
+            <button type="submit" id="libro-precio-btn-submit">Actualizar precio</button>
+          </div>
+        </fieldset>
+      </form>
+
+      <div id="libro-precio-feedback" class="mensaje" role="status" aria-live="polite" hidden></div>
+
       <h3>Libros registrados</h3>
 
       <p id="libros-listado-vacio" class="listado-vacio" hidden>Aún no hay libros registrados en el sistema.</p>
@@ -204,27 +228,12 @@
               <th scope="col">ISBN</th>
               <th scope="col">Editorial</th>
               <th scope="col">Género</th>
-              <th scope="col">Autores</th>
+              <th scope="col">Stock</th>
               <th scope="col">Precio</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>El principito</td>
-              <td>978-84-376-0494-7</td>
-              <td>Editorial Sudamericana</td>
-              <td>Fábula</td>
-              <td>Antoine de Saint-Exupéry</td>
-              <td>$1500,00</td>
-            </tr>
-            <tr>
-              <td>Cuentos de terror</td>
-              <td>978-987-1111-22-3</td>
-              <td>Ediciones Horizon</td>
-              <td>Sin clasificar</td>
-              <td>Julia M. Peralta</td>
-              <td>$2000,00</td>
-            </tr>
+            <!-- Filas inyectadas dinámicamente vía API -->
           </tbody>
         </table>
       </div>
@@ -270,18 +279,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>Ana Beltrán</td>
-              <td>ana.beltran@correo.test</td>
-            </tr>
-            <tr>
-              <td>Carlos Duarte</td>
-              <td>carlos.duarte@correo.test</td>
-            </tr>
-            <tr>
-              <td>Elena Fuentes</td>
-              <td>elena.fuentes@correo.test</td>
-            </tr>
+            <!-- Filas inyectadas dinámicamente vía API -->
           </tbody>
         </table>
       </div>
@@ -298,9 +296,6 @@
             <label for="venta-cliente">Cliente:</label>
             <select id="venta-cliente" name="venta-cliente" required>
               <option value="" disabled selected>Seleccione un cliente</option>
-              <option value="1">Ana Beltrán</option>
-              <option value="2">Carlos Duarte</option>
-              <option value="3">Elena Fuentes</option>
             </select>
           </div>
 
@@ -308,9 +303,6 @@
             <label for="venta-libro">Libro:</label>
             <select id="venta-libro" name="venta-libro" required>
               <option value="" disabled selected>Seleccione un libro</option>
-              <option value="1">El principito — $1500,00</option>
-              <option value="2">Cuentos de terror — $2000,00</option>
-              <option value="3">Introducción a la programación — $3250,50</option>
             </select>
           </div>
 
@@ -327,7 +319,7 @@
 
       <h3>Renglones de la venta</h3>
 
-      <p id="renglones-listado-vacio" class="listado-vacio" hidden>La venta aún no tiene renglones agregados.</p>
+      <p id="renglones-listado-vacio" class="listado-vacio">La venta aún no tiene renglones agregados.</p>
 
       <div class="tabla-contenedor">
         <table id="tabla-renglones">
@@ -342,41 +334,35 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>El principito</td>
-              <td>2</td>
-              <td>$1500,00</td>
-              <td>$3000,00</td>
-              <td>—</td>
-            </tr>
-            <tr>
-              <td>Cuentos de terror</td>
-              <td>1</td>
-              <td>$2000,00</td>
-              <td>$2000,00</td>
-              <td>—</td>
-            </tr>
+            <!-- Renglones del borrador en memoria -->
           </tbody>
         </table>
       </div>
 
       <p class="resumen-venta">
         Total de la venta:
-        <strong id="venta-total">$5000,00</strong>
+        <strong id="venta-total">$0,00</strong>
       </p>
 
       <button type="button" id="venta-confirmar">Confirmar venta</button>
 
       <!-- Resultado de la operación (correcta o rechazada), texto "OK —" / "Error —" escrito por JavaScript -->
-      <p id="venta-feedback" class="mensaje" role="status" aria-live="polite" hidden>Ejemplo de mensaje: OK — Venta confirmada. O bien: Error — No se pudo confirmar la venta (el motivo se explica en texto).</p>
+      <p id="venta-feedback" class="mensaje" role="status" aria-live="polite" hidden></p>
+
+      <!-- Resumen oficial devuelto por la API tras POST /api/ventas/ (201 Created) -->
+      <div id="venta-confirmada-detalle" class="venta-confirmada-panel" hidden></div>
     </section>
 
     <section id="vista-historial" aria-labelledby="titulo-historial">
       <h2 id="titulo-historial">Historial</h2>
 
+      <div id="historial-cargando" class="indicador-carga" role="status" hidden>
+        <span class="spinner" aria-hidden="true"></span> Cargando historial de ventas...
+      </div>
       <p id="historial-listado-vacio" class="listado-vacio" hidden>Aún no hay ventas confirmadas en el historial.</p>
+      <div id="historial-error" class="mensaje-error" role="alert" hidden></div>
 
-      <div class="tabla-contenedor">
+      <div class="tabla-contenedor" id="historial-tabla-contenedor">
         <table id="tabla-historial">
           <caption>Ventas confirmadas</caption>
           <thead>
@@ -389,62 +375,32 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>V-0001</td>
-              <td>15/10/2026</td>
-              <td>Ana Beltrán</td>
-              <td>$5000,00</td>
-              <td><button type="button" class="historial-ver-detalle">Ver detalle de la venta V-0001</button></td>
-            </tr>
-            <tr>
-              <td>V-0002</td>
-              <td>18/10/2026</td>
-              <td>Carlos Duarte</td>
-              <td>$3250,50</td>
-              <td><button type="button" class="historial-ver-detalle">Ver detalle de la venta V-0002</button></td>
-            </tr>
+            <!-- Filas cargadas desde GET /api/ventas/ -->
           </tbody>
         </table>
       </div>
 
+      <nav class="paginacion" id="historial-paginacion" aria-label="Paginación del historial de ventas">
+        <button type="button" id="historial-anterior" disabled aria-label="Página anterior del historial">&laquo; Anterior</button>
+        <span id="historial-info-paginacion" aria-live="polite">Página 1</span>
+        <button type="button" id="historial-siguiente" disabled aria-label="Página siguiente del historial">Siguiente &raquo;</button>
+        <div class="selector-limite">
+          <label for="historial-limite">Mostrar:</label>
+          <select id="historial-limite" aria-label="Cantidad de ventas por página">
+            <option value="10">10 por página</option>
+            <option value="20" selected>20 por página</option>
+            <option value="50">50 por página</option>
+            <option value="100">100 por página</option>
+          </select>
+        </div>
+      </nav>
+
       <h3>Detalle de la venta seleccionada</h3>
 
-      <!-- Panel de detalle inmutable: JavaScript renderiza aquí la venta elegida.
+      <!-- Panel de detalle inmutable: JavaScript renderiza aquí la venta elegida desde GET /api/ventas/{id}.
            No tiene (ni deberá tener) controles de edición o eliminación. -->
       <div id="tabla-historial-detalle">
-        <div class="tabla-contenedor">
-          <table>
-            <caption>Renglones de la venta seleccionada (valores históricos)</caption>
-            <thead>
-              <tr>
-                <th scope="col">Libro</th>
-                <th scope="col">Cantidad</th>
-                <th scope="col">Precio unitario</th>
-                <th scope="col">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>El principito</td>
-                <td>2</td>
-                <td>$1500,00</td>
-                <td>$3000,00</td>
-              </tr>
-              <tr>
-                <td>Cuentos de terror</td>
-                <td>1</td>
-                <td>$2000,00</td>
-                <td>$2000,00</td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr>
-                <th scope="row" colspan="3">Total de la venta</th>
-                <td>$5000,00</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+        <p class="listado-vacio">Seleccione una venta del historial para ver su detalle.</p>
       </div>
     </section>
   </main>
@@ -458,6 +414,7 @@
   <script type="module" src="js/books.js"></script>
   <script type="module" src="js/clients.js"></script>
   <script type="module" src="js/sales.js"></script>
+  <script type="module" src="js/history.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

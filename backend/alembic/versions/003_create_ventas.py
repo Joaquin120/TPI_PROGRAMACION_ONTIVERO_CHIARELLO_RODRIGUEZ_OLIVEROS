@@ -1,7 +1,7 @@
 """create_ventas
 
 Revision ID: 003
-Revises: 002
+Revises: 002b
 Create Date: 2026-11-12 20:00:00.000000
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "003"
-down_revision: str | Sequence[str] | None = "002"
+down_revision: str | Sequence[str] | None = "002b"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

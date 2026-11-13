@@ -95,6 +95,41 @@ export function agregarRenglonVenta({ libroId, titulo, precioUnitario, cantidad 
 }
 
 /**
+ * Actualiza la cantidad de un renglón existente en el borrador y recalcula su subtotal.
+ * Valida que la cantidad sea un entero >= 1 (RN-VEN-03).
+ * @param {number|string} libroId
+ * @param {number|string} nuevaCantidad
+ * @returns {{ exito: boolean, error?: string, renglon?: Object }}
+ */
+export function actualizarCantidadRenglonVenta(libroId, nuevaCantidad) {
+  const idNum = parseInt(libroId, 10);
+  const cantNum = parseInt(nuevaCantidad, 10);
+
+  if (isNaN(cantNum) || cantNum < 1) {
+    return {
+      exito: false,
+      error: 'La cantidad debe ser un entero mayor o igual a 1.',
+    };
+  }
+
+  const renglon = estadoVenta.renglones.find((r) => r.libroId === idNum);
+  if (!renglon) {
+    return {
+      exito: false,
+      error: 'El libro no se encuentra en el borrador de venta.',
+    };
+  }
+
+  renglon.cantidad = cantNum;
+  renglon.subtotal = Math.round(cantNum * renglon.precioUnitario * 100) / 100;
+
+  return {
+    exito: true,
+    renglon,
+  };
+}
+
+/**
  * Elimina un renglón del borrador de venta según el ID del libro.
  * @param {number|string} libroId
  * @returns {{ exito: boolean }}
@@ -141,7 +176,36 @@ export function renderizarTablaRenglones(doc) {
     tr.appendChild(tdLibro);
 
     const tdCantidad = doc.createElement('td');
-    tdCantidad.textContent = String(renglon.cantidad);
+    const inputCantidad = doc.createElement('input');
+    inputCantidad.type = 'number';
+    inputCantidad.className = 'renglon-cantidad';
+    inputCantidad.setAttribute('min', '1');
+    inputCantidad.setAttribute('step', '1');
+    inputCantidad.value = String(renglon.cantidad);
+    inputCantidad.setAttribute('aria-label', `Cantidad de ${renglon.titulo}`);
+    inputCantidad.dataset.libroId = String(renglon.libroId);
+
+    inputCantidad.addEventListener('change', () => {
+      const res = actualizarCantidadRenglonVenta(renglon.libroId, inputCantidad.value);
+      const feedback = doc.getElementById('venta-feedback');
+      if (!res.exito) {
+        inputCantidad.value = String(renglon.cantidad);
+        if (feedback) {
+          feedback.hidden = false;
+          feedback.textContent = `Error — ${res.error}`;
+          feedback.classList.remove('mensaje-exito');
+          feedback.classList.add('mensaje-error');
+        }
+        return;
+      }
+      if (feedback) {
+        feedback.hidden = true;
+        feedback.textContent = '';
+      }
+      renderizarTablaRenglones(doc);
+    });
+
+    tdCantidad.appendChild(inputCantidad);
     tr.appendChild(tdCantidad);
 
     const tdPrecio = doc.createElement('td');
@@ -208,6 +272,82 @@ export function sincronizarSelectorVentaLibros(libros, doc) {
       selectLibro.appendChild(opt);
     });
   }
+}
+
+/**
+ * Renderiza el comprobante oficial devuelto por la API tras confirmar una venta (RN-VEN-06).
+ * Muestra los precios unitarios copiados del catálogo, los subtotales y el total oficial.
+ * @param {Object|null} ventaCreada
+ * @param {Document|Object} doc
+ */
+export function renderizarVentaConfirmada(ventaCreada, doc) {
+  if (!doc) return;
+  const panel = doc.getElementById('venta-confirmada-detalle');
+  if (!panel) return;
+
+  panel.innerHTML = '';
+  if (Array.isArray(panel.children)) {
+    panel.children = [];
+  }
+
+  if (!ventaCreada) {
+    panel.hidden = true;
+    return;
+  }
+
+  const titulo = doc.createElement('h3');
+  titulo.textContent = `Comprobante de Venta #${ventaCreada.id} (${ventaCreada.cliente_nombre || `Cliente #${ventaCreada.cliente_id}`})`;
+  panel.appendChild(titulo);
+
+  const tablaContenedor = doc.createElement('div');
+  tablaContenedor.className = 'tabla-contenedor';
+
+  const tabla = doc.createElement('table');
+  const thead = doc.createElement('thead');
+  const trHead = doc.createElement('tr');
+  ['Libro', 'Cantidad', 'Precio unitario (catálogo)', 'Subtotal'].forEach((col) => {
+    const th = doc.createElement('th');
+    th.scope = 'col';
+    th.textContent = col;
+    trHead.appendChild(th);
+  });
+  thead.appendChild(trHead);
+  tabla.appendChild(thead);
+
+  const tbody = doc.createElement('tbody');
+  const renglones = Array.isArray(ventaCreada.renglones) ? ventaCreada.renglones : [];
+  renglones.forEach((r) => {
+    const tr = doc.createElement('tr');
+    [
+      r.titulo || `Libro #${r.libro_id}`,
+      String(r.cantidad),
+      formatearPrecio(r.precio_unitario),
+      formatearPrecio(r.subtotal),
+    ].forEach((valor) => {
+      const td = doc.createElement('td');
+      td.textContent = valor;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  tabla.appendChild(tbody);
+
+  const tfoot = doc.createElement('tfoot');
+  const trFoot = doc.createElement('tr');
+  const thTotal = doc.createElement('th');
+  thTotal.scope = 'row';
+  thTotal.setAttribute('colspan', '3');
+  thTotal.textContent = 'Total oficial confirmado';
+  trFoot.appendChild(thTotal);
+  const tdTotal = doc.createElement('td');
+  tdTotal.textContent = formatearPrecio(ventaCreada.total);
+  trFoot.appendChild(tdTotal);
+  tfoot.appendChild(trFoot);
+  tabla.appendChild(tfoot);
+
+  tablaContenedor.appendChild(tabla);
+  panel.appendChild(tablaContenedor);
+  panel.hidden = false;
 }
 
 /**
@@ -292,6 +432,7 @@ export async function enviarConfirmacionVenta(opciones = {}) {
     if (inputCantidad) inputCantidad.value = '1';
 
     renderizarTablaRenglones(doc);
+    renderizarVentaConfirmada(ventaCreada, doc);
 
     if (typeof opciones.onExito === 'function') {
       opciones.onExito(ventaCreada);

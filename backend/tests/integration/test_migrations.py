@@ -23,7 +23,7 @@ def migration_module():
 
 
 def test_migration_chain_structure() -> None:
-    """Verifies that Alembic ScriptDirectory detects revision 003 as head with parents 002 and 001."""
+    """Verifies that Alembic ScriptDirectory detects revision 003 as head with chain 001 -> 002 -> 002b -> 003."""
     cfg = Config("alembic.ini")
     script = ScriptDirectory.from_config(cfg)
     heads = script.get_heads()
@@ -32,7 +32,12 @@ def test_migration_chain_structure() -> None:
     rev_003 = script.get_revision("003")
     assert rev_003 is not None
     assert rev_003.revision == "003"
-    assert rev_003.down_revision == "002"
+    assert rev_003.down_revision == "002b"
+
+    rev_002b = script.get_revision("002b")
+    assert rev_002b is not None
+    assert rev_002b.revision == "002b"
+    assert rev_002b.down_revision == "002"
 
     rev_002 = script.get_revision("002")
     assert rev_002 is not None
@@ -127,6 +132,40 @@ def test_migration_upgrade_and_downgrade_execution(migration_module) -> None:
 
 
 @pytest.fixture
+def migration_module_002b():
+    """Dynamically loads the 002b_create_catalogo_libros migration revision."""
+    migration_path = Path("alembic/versions/002b_create_catalogo_libros.py")
+    assert migration_path.exists(), f"Migration file not found at {migration_path}"
+
+    spec = importlib.util.spec_from_file_location("migration_002b", migration_path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_migration_002b_upgrade_and_downgrade(migration_module, migration_module_002, migration_module_002b) -> None:
+    """Verifies upgrade and downgrade for editoriales, generos, autores, libros and libros_autores."""
+    test_engine = create_engine("sqlite:///:memory:")
+
+    with test_engine.connect() as conn:
+        ctx = MigrationContext.configure(conn)
+        with Operations.context(ctx):
+            migration_module.upgrade()
+            migration_module_002.upgrade()
+            migration_module_002b.upgrade()
+
+            inspector = inspect(conn)
+            tables = set(inspector.get_table_names())
+            assert {"editoriales", "generos", "autores", "libros", "libros_autores"}.issubset(tables)
+
+            migration_module_002b.downgrade()
+            inspector = inspect(conn)
+            tables_after = set(inspector.get_table_names())
+            assert {"editoriales", "generos", "autores", "libros", "libros_autores"}.isdisjoint(tables_after)
+
+
+@pytest.fixture
 def migration_module_003():
     """Dynamically loads the 003_create_ventas migration revision."""
     migration_path = Path("alembic/versions/003_create_ventas.py")
@@ -139,15 +178,22 @@ def migration_module_003():
     return module
 
 
-def test_migration_003_upgrade_and_downgrade(migration_module, migration_module_002, migration_module_003) -> None:
+def test_migration_003_upgrade_and_downgrade(
+    migration_module,
+    migration_module_002,
+    migration_module_002b,
+    migration_module_003,
+) -> None:
     """Verifies upgrade and downgrade for ventas and ventas_renglones tables."""
     test_engine = create_engine("sqlite:///:memory:")
 
     with test_engine.connect() as conn:
+        conn.exec_driver_sql("PRAGMA foreign_keys=ON")
         ctx = MigrationContext.configure(conn)
         with Operations.context(ctx):
             migration_module.upgrade()
             migration_module_002.upgrade()
+            migration_module_002b.upgrade()
             migration_module_003.upgrade()
 
             inspector = inspect(conn)

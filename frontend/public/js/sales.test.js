@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import {
   estadoVenta,
   agregarRenglonVenta,
+  actualizarCantidadRenglonVenta,
   eliminarRenglonVenta,
   calcularTotalVenta,
   renderizarTablaRenglones,
+  renderizarVentaConfirmada,
   enviarConfirmacionVenta,
 } from './sales.js';
 import { ApiError } from './api.js';
@@ -22,13 +24,16 @@ function crearMockElement(tag = 'div', id = '') {
     dataset: {},
     children: [],
     attributes: {},
+    listeners: {},
     setAttribute(k, v) { this.attributes[k] = v; },
     getAttribute(k) { return this.attributes[k]; },
     appendChild(child) {
       this.children.push(child);
       return child;
     },
-    addEventListener() {},
+    addEventListener(type, fn) {
+      this.listeners[type] = fn;
+    },
     classList: {
       classes: [],
       add(c) { if (!this.classes.includes(c)) this.classes.push(c); },
@@ -132,6 +137,19 @@ describe('Módulo de Ventas: Composición de Borrador en Memoria', () => {
     assert.equal(estadoVenta.renglones[0].libroId, 2);
     assert.equal(calcularTotalVenta(), 2000);
   });
+
+  it('permite modificar la cantidad de un renglón existente recalculando subtotal y total', () => {
+    agregarRenglonVenta({ libroId: 1, titulo: 'El principito', precioUnitario: 1500, cantidad: 1 });
+    const resOk = actualizarCantidadRenglonVenta(1, 3);
+    assert.equal(resOk.exito, true);
+    assert.equal(estadoVenta.renglones[0].cantidad, 3);
+    assert.equal(estadoVenta.renglones[0].subtotal, 4500);
+    assert.equal(calcularTotalVenta(), 4500);
+
+    const resBad = actualizarCantidadRenglonVenta(1, 0);
+    assert.equal(resBad.exito, false);
+    assert.equal(estadoVenta.renglones[0].cantidad, 3);
+  });
 });
 
 describe('Módulo de Ventas: Renderizado de Tabla de Renglones', () => {
@@ -159,6 +177,58 @@ describe('Módulo de Ventas: Renderizado de Tabla de Renglones', () => {
     estadoVenta.renglones = [];
     renderizarTablaRenglones(mockDoc);
     assert.equal(mockDoc.getElementById('renglones-listado-vacio').hidden, false);
+  });
+
+  it('renderizarVentaConfirmada muestra comprobante oficial y oculta panel con null', () => {
+    const mockDoc = crearMockDocument();
+    const venta = {
+      id: 9,
+      cliente_id: 1,
+      cliente_nombre: 'Ana Beltrán',
+      total: 4500,
+      renglones: [
+        { libro_id: 1, titulo: 'El principito', cantidad: 3, precio_unitario: 1500, subtotal: 4500 },
+      ],
+    };
+
+    renderizarVentaConfirmada(venta, mockDoc);
+    const panel = mockDoc.getElementById('venta-confirmada-detalle');
+    assert.equal(panel.hidden, false);
+    assert.match(panel.children[0].textContent, /Comprobante de Venta #9/);
+    const tabla = panel.children[1].children[0];
+    const tbody = tabla.children[1];
+    assert.equal(tbody.children[0].children[2].textContent, '$1500,00');
+    assert.equal(tbody.children[0].children[3].textContent, '$4500,00');
+
+    renderizarVentaConfirmada(null, mockDoc);
+    assert.equal(panel.hidden, true);
+    assert.equal(panel.children.length, 0);
+  });
+
+  it('input .renglon-cantidad recalcula subtotal ante cambio válido y revierte si es <= 0', () => {
+    const mockDoc = crearMockDocument();
+    estadoVenta.renglones = [
+      { libroId: 1, titulo: 'El principito', precioUnitario: 1500, cantidad: 1, subtotal: 1500 },
+    ];
+    renderizarTablaRenglones(mockDoc);
+
+    const tbody = mockDoc.getElementById('tabla-renglones').querySelector('tbody');
+    const inputCant = tbody.children[0].children[1].children[0];
+
+    // Cambio inválido -> restaura valor y muestra error
+    inputCant.value = '0';
+    inputCant.listeners.change();
+    assert.equal(estadoVenta.renglones[0].cantidad, 1);
+    assert.equal(mockDoc.getElementById('venta-feedback').hidden, false);
+
+    // Cambio válido -> actualiza subtotal y total
+    const tbody2 = mockDoc.getElementById('tabla-renglones').querySelector('tbody');
+    const inputCant2 = tbody2.children[0].children[1].children[0];
+    inputCant2.value = '4';
+    inputCant2.listeners.change();
+    assert.equal(estadoVenta.renglones[0].cantidad, 4);
+    assert.equal(estadoVenta.renglones[0].subtotal, 6000);
+    assert.equal(mockDoc.getElementById('venta-total').textContent, '$6000,00');
   });
 });
 
@@ -206,6 +276,11 @@ describe('Módulo de Ventas: Envío y Casos G-04 / G-06', () => {
 
     // Borrador reseteado
     assert.equal(estadoVenta.renglones.length, 0);
+
+    // Panel de comprobante renderizado con precios unitarios y total
+    const panelConfirmada = mockDoc.getElementById('venta-confirmada-detalle');
+    assert.equal(panelConfirmada.hidden, false);
+    assert.equal(panelConfirmada.children.length, 2);
   });
 
   it('Caso G-06: rechazo 409 por cliente inexistente preserva el borrador intacto (RN-VEN-08)', async () => {

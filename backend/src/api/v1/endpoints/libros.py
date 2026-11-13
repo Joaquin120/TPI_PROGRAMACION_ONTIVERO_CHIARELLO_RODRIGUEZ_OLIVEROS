@@ -14,6 +14,7 @@ from src.schemas.libro import (
     LibroCreate,
     LibroDetailResponse,
     LibroResponse,
+    LibroUpdate,
 )
 
 router = APIRouter(tags=["libros"])
@@ -168,6 +169,32 @@ async def list_libros(
     ]
 
 
+def _build_libro_detail_response(libro: Libro) -> LibroDetailResponse:
+    """Construye la respuesta detallada de un libro incluyendo autores ordenados."""
+    autores_response = [
+        {
+            "autor_id": la.autor_id,
+            "nombre": la.autor.nombre if la.autor else "Autor desconocido",
+            "rol": la.rol,
+            "orden": la.orden,
+        }
+        for la in sorted(getattr(libro, "autores_asociados", []), key=lambda x: x.orden)
+    ]
+
+    return LibroDetailResponse(
+        id=libro.id,
+        titulo=libro.titulo,
+        isbn=libro.isbn,
+        precio=libro.precio,
+        stock=libro.stock,
+        editorial_id=libro.editorial_id,
+        editorial=libro.editorial.nombre if getattr(libro, "editorial", None) else None,
+        genero_id=libro.genero_id,
+        genero=libro.genero.nombre if getattr(libro, "genero", None) else None,
+        autores=autores_response,
+    )
+
+
 @router.get(
     "/{libro_id}",
     response_model=LibroDetailResponse,
@@ -198,25 +225,120 @@ async def get_libro_detail(
             detail=f"Libro con ID {libro_id} no encontrado",
         )
 
-    autores_response = [
-        {
-            "autor_id": la.autor_id,
-            "nombre": la.autor.nombre if la.autor else "Autor desconocido",
-            "rol": la.rol,
-            "orden": la.orden,
-        }
-        for la in sorted(libro.autores_asociados, key=lambda x: x.orden)
-    ]
+    return _build_libro_detail_response(libro)
 
-    return LibroDetailResponse(
-        id=libro.id,
-        titulo=libro.titulo,
-        isbn=libro.isbn,
-        precio=libro.precio,
-        stock=libro.stock,
-        editorial_id=libro.editorial_id,
-        editorial=libro.editorial.nombre if libro.editorial else None,
-        genero_id=libro.genero_id,
-        genero=libro.genero.nombre if libro.genero else None,
-        autores=autores_response,
+
+@router.patch(
+    "/{libro_id}",
+    response_model=LibroDetailResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Actualizar parcialmente un libro (ej. precio o stock) sin alterar ventas históricas",
+)
+async def update_libro(
+    libro_id: int,
+    libro_in: LibroUpdate,
+    db: AsyncSession = Depends(get_db),
+) -> LibroDetailResponse:
+    """Actualiza parcialmente los atributos de un libro en el catálogo (G-05 / RN-VEN-05)."""
+    stmt = (
+        select(Libro)
+        .options(
+            selectinload(Libro.editorial),
+            selectinload(Libro.genero),
+            selectinload(Libro.autores_asociados).selectinload(LibroAutor.autor),
+        )
+        .where(Libro.id == libro_id)
     )
+    libro = (await db.execute(stmt)).scalar_one_or_none()
+
+    if libro is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Libro con ID {libro_id} no encontrado",
+        )
+
+    fields_set = libro_in.model_fields_set
+
+    if "titulo" in fields_set:
+        if libro_in.titulo is None or not libro_in.titulo.strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="El título del libro no puede estar vacío",
+            )
+        libro.titulo = libro_in.titulo.strip()
+
+    if "isbn" in fields_set:
+        if libro_in.isbn is None or not libro_in.isbn.strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="El ISBN del libro no puede estar vacío",
+            )
+        nuevo_isbn = libro_in.isbn.strip()
+        if nuevo_isbn != libro.isbn:
+            stmt_isbn = select(Libro).where(Libro.isbn == nuevo_isbn, Libro.id != libro_id)
+            existente = (await db.execute(stmt_isbn)).scalar_one_or_none()
+            if existente is not None and existente.id != libro_id:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"El ISBN '{nuevo_isbn}' ya se encuentra registrado",
+                )
+        libro.isbn = nuevo_isbn
+
+    if "precio" in fields_set:
+        if libro_in.precio is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="El precio del libro no puede ser nulo",
+            )
+        libro.precio = libro_in.precio
+
+    if "stock" in fields_set:
+        if libro_in.stock is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="El stock del libro no puede ser nulo",
+            )
+        libro.stock = libro_in.stock
+
+    if "editorial_id" in fields_set:
+        if libro_in.editorial_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="La editorial del libro no puede ser nula",
+            )
+        stmt_ed = select(Editorial).where(Editorial.id == libro_in.editorial_id)
+        editorial = (await db.execute(stmt_ed)).scalar_one_or_none()
+        if not editorial:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"La editorial con ID {libro_in.editorial_id} no existe",
+            )
+        libro.editorial_id = libro_in.editorial_id
+        libro.editorial = editorial
+
+    if "genero_id" in fields_set:
+        if libro_in.genero_id is None:
+            libro.genero_id = None
+            libro.genero = None
+        else:
+            stmt_gen = select(Genero).where(Genero.id == libro_in.genero_id)
+            genero = (await db.execute(stmt_gen)).scalar_one_or_none()
+            if not genero:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"El género con ID {libro_in.genero_id} no existe",
+                )
+            libro.genero_id = libro_in.genero_id
+            libro.genero = genero
+
+    try:
+        await db.commit()
+        await db.refresh(libro)
+    except IntegrityError as exc:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Conflicto de integridad al actualizar el libro: {exc.orig}",
+        ) from exc
+
+    return _build_libro_detail_response(libro)

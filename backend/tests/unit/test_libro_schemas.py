@@ -11,6 +11,7 @@ from src.schemas.libro import (
     LibroCreate,
     LibroDetailResponse,
     LibroResponse,
+    LibroUpdate,
 )
 
 
@@ -77,3 +78,18 @@ def test_libro_create_stock_negativo():
             editorial_id=1,
             autores=[LibroAutorCreate(autor_id=1)],
         )
+
+
+def test_libro_update_partial_valid():
+    libro_upd = LibroUpdate(precio=Decimal("2999.99"))
+    assert libro_upd.precio == Decimal("2999.99")
+    assert "precio" in libro_upd.model_fields_set
+    assert "titulo" not in libro_upd.model_fields_set
+
+
+def test_libro_update_invalid_precio_o_stock():
+    with pytest.raises(ValidationError):
+        LibroUpdate(precio=Decimal("0"))
+
+    with pytest.raises(ValidationError):
+        LibroUpdate(stock=-1)

@@ -48,6 +48,17 @@ class LibroCreate(BaseModel):
     autores: list[LibroAutorCreate] = Field(..., min_length=1)
 
 
+class LibroUpdate(BaseModel):
+    """Schema for partial updates to an existing book (used by PATCH /libros/{id})."""
+
+    titulo: str | None = Field(default=None, min_length=1, max_length=255)
+    isbn: str | None = Field(default=None, min_length=1, max_length=32)
+    precio: Decimal | None = Field(default=None, gt=0)
+    stock: int | None = Field(default=None, ge=0)
+    editorial_id: int | None = None
+    genero_id: int | None = None
+
+
 class LibroAutorDetailResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

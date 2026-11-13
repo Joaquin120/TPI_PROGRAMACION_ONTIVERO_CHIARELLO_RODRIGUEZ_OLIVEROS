@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -16,6 +16,33 @@ from src.schemas.venta import (
 )
 
 router = APIRouter(tags=["ventas"])
+
+
+def _build_venta_response(venta: Venta) -> VentaResponse:
+    """Construye el esquema de respuesta oficial de una venta con sus renglones congelados."""
+    renglones_res = [
+        VentaRenglonResponse(
+            id=r.id or 0,
+            libro_id=r.libro_id,
+            titulo=r.libro.titulo if getattr(r, "libro", None) else None,
+            cantidad=r.cantidad,
+            precio_unitario=round(float(r.precio_unitario), 2),
+            subtotal=round(float(r.subtotal), 2),
+        )
+        for r in getattr(venta, "renglones", [])
+    ]
+
+    fecha_venta = venta.fecha if getattr(venta, "fecha", None) else datetime.now(timezone.utc)
+    cliente_obj = getattr(venta, "cliente", None)
+
+    return VentaResponse(
+        id=venta.id or 0,
+        cliente_id=venta.cliente_id,
+        cliente_nombre=cliente_obj.nombre if cliente_obj else None,
+        fecha=fecha_venta,
+        total=round(float(venta.total), 2),
+        renglones=renglones_res,
+    )
 
 
 @router.post(
@@ -85,25 +112,59 @@ async def create_venta(
         )
 
     # 4. Construir respuesta oficial con importes congelados (RN-VEN-06)
-    renglones_res = [
-        VentaRenglonResponse(
-            id=r.id or 0,
-            libro_id=r.libro_id,
-            titulo=r.libro.titulo if getattr(r, "libro", None) else None,
-            cantidad=r.cantidad,
-            precio_unitario=float(r.precio_unitario),
-            subtotal=float(r.subtotal),
+    return _build_venta_response(venta)
+
+
+@router.get(
+    "/",
+    response_model=list[VentaResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Listar historial de ventas confirmadas con paginación",
+)
+async def list_ventas(
+    offset: int = Query(default=0, ge=0, description="Desplazamiento inicial"),
+    limit: int = Query(default=20, ge=1, le=100, description="Cantidad máxima de ventas"),
+    db: AsyncSession = Depends(get_db),
+) -> list[VentaResponse]:
+    """Retorna el historial paginado de ventas ordenadas de la más reciente a la más antigua."""
+    stmt = (
+        select(Venta)
+        .options(
+            selectinload(Venta.cliente),
+            selectinload(Venta.renglones).selectinload(VentaRenglon.libro),
         )
-        for r in venta.renglones
-    ]
-
-    fecha_venta = venta.fecha if getattr(venta, "fecha", None) else datetime.now(timezone.utc)
-
-    return VentaResponse(
-        id=venta.id or 0,
-        cliente_id=venta.cliente_id,
-        cliente_nombre=cliente.nombre,
-        fecha=fecha_venta,
-        total=float(venta.total),
-        renglones=renglones_res,
+        .order_by(Venta.id.desc())
+        .offset(offset)
+        .limit(limit)
     )
+    result = await db.execute(stmt)
+    ventas = result.scalars().all()
+    return [_build_venta_response(v) for v in ventas]
+
+
+@router.get(
+    "/{venta_id}",
+    response_model=VentaResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Consultar el detalle completo e histórico de una venta por su ID",
+)
+async def get_venta_detail(
+    venta_id: int,
+    db: AsyncSession = Depends(get_db),
+) -> VentaResponse:
+    """Retorna una venta confirmada con cliente, fecha, renglones congelados y total oficial."""
+    stmt = (
+        select(Venta)
+        .options(
+            selectinload(Venta.cliente),
+            selectinload(Venta.renglones).selectinload(VentaRenglon.libro),
+        )
+        .where(Venta.id == venta_id)
+    )
+    venta = (await db.execute(stmt)).scalar_one_or_none()
+    if venta is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Venta con ID {venta_id} no encontrada",
+        )
+    return _build_venta_response(venta)

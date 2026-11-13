@@ -213,7 +213,7 @@ Paso │ Agente A (Backend / Infra)         │ Agente B (Backend Aux / Funciona
 ---
 
 ### [C-07] `ventas-historial-detalle`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**: Historial de ventas, detalle de transacciones y verificación de invariante de precio histórico (Ejercicio 3B / US-008):
   - Pantalla de historial en `frontend/public/index.html`: tabla de ventas paginada consumiendo `GET /api/ventas/?limit=20&offset=0`.
   - Controles de paginación para el historial (`limit`, `offset`).
