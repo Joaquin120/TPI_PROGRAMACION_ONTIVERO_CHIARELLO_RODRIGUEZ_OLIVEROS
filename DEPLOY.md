@@ -7,8 +7,8 @@ Registro técnico de infraestructura, variables de entorno, mapeo de puertos, mi
 ## 1. Datos del Despliegue Público
 
 - **URL Pública HTTPS (Frontend):** https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/
-- **Commit Hash Desplegado y Verificado (G-01..G-07):** `ef80ead594ecd8e99977b70ededb2c07235e40df` *(rama `feat/c07-c09` lista para promoción a `main`)*
-- **Rama Configurada Durante Verificación E2E:** `feat/c07-c09`
+- **Rama Desplegada en Easypanel:** `main` *(promocionada desde `feat/c07-c09` y re-verificada en producción)*
+- **Commit de Código Verificado (`G-01`..`G-07`):** `ef80ead594ecd8e99977b70ededb2c07235e40df` *(cierre documental en `faf5ac0` sin cambios posteriores en `backend/` ni `frontend/`)*
 - **Endpoint de Readiness Público:** `https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/health/ready` → HTTP `200` (`{"status":"ready","database":"connected"}`)
 - **Endpoint de Liveness Público:** `https://jjoc-libreria-tpi-frontend.oyerue.easypanel.host/api/health/live` → HTTP `200` (`{"status":"healthy","version":"0.1.0","environment":"production"}`)
 

@@ -4,10 +4,10 @@ Aplicación web full-stack para la gestión de catálogo de libros, alta de clie
 
 ## Integrantes
 
-- **Ontivero**
-- **Chiarello**
-- **Rodriguez**
-- **Oliveros**
+- **Santiago Ontivero**
+- **Joaquín Chiarello**
+- **Cristian Rodriguez**
+- **Joseph Oliveros**
 
 Universidad Tecnológica Nacional (UTN) — Tecnicatura Universitaria en Programación — Programación III (Comisión 3).
 
@@ -106,6 +106,6 @@ En entornos contenerizados (`backend/Dockerfile`), este comando corre automátic
 - [x] `frontend/` con código web nativo en `public/`, `Dockerfile`, `.dockerignore` y `default.conf.template`.
 - [x] `backend/` con API FastAPI, `Dockerfile`, `.dockerignore`, `requirements.txt`, migraciones Alembic (`alembic/`) y carga inicial (`src/db/seed.py`).
 - [x] `README.md` con identificación de integrantes, guía de ejecución local y carga de datos iniciales.
-- [ ] `DEPLOY.md` completado con la URL pública HTTPS definitiva y el hash de commit desplegado en Easypanel.
-- [ ] `evidencia/` completada con bitácoras y capturas reales de los casos `G-01` a `G-07` sobre la URL pública.
-- [ ] Empaquetado `.zip` final libre de archivos `.env`, credenciales reales, `node_modules/`, `.venv/`, `__pycache__/` y `.pytest_cache/`.
+- [x] `DEPLOY.md` completado con la URL pública HTTPS definitiva y el hash de commit desplegado en Easypanel.
+- [x] `evidencia/` completada con bitácoras y capturas reales de los casos `G-01` a `G-07` sobre la URL pública.
+- [x] Empaquetado `.zip` final libre de archivos `.env`, credenciales reales, `node_modules/`, `.venv/`, `__pycache__/` y `.pytest_cache/`.
